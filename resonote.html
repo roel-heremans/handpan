@@ -500,6 +500,7 @@ function loadPattern(p){stop();
   state.instrument.fields=state.instrument.fields.map(f=>typeof f==='string'?{note:f,bottom:false}:f);
   state.artist=p.artist||"";
   state.marks=p.marks?JSON.parse(JSON.stringify(p.marks)):{};
+  Object.values(state.marks).forEach(mk=>{if('tempo' in mk){const t=+mk.tempo;if(t)mk.tempo=t;else delete mk.tempo;}}); // coerce imported tempo to a number
   state.tempo=p.tempo;state.beats=p.beats;state.sub=p.sub;state.measures=p.measures;
   const g=JSON.parse(JSON.stringify(p.grid));Object.keys(g).forEach(k=>{if(Array.isArray(g[k])){const o={};g[k].forEach(v=>o[v]='R');g[k]=o;}});
   state.grid=g;syncControls();renderAll();toast('Loaded "'+p.name+'"');}
@@ -539,7 +540,9 @@ function syncControls(){document.getElementById('tempo').value=state.tempo;docum
 function pruneGrid(){const steps=totalSteps(),voices=orderOf();
   Object.keys(state.grid).forEach(k=>{if(+k>=steps){delete state.grid[k];return;}
     Object.keys(state.grid[k]).forEach(v=>{if(!voices.includes(v))delete state.grid[k][v];});
-    if(!Object.keys(state.grid[k]).length)delete state.grid[k];});}
+    if(!Object.keys(state.grid[k]).length)delete state.grid[k];});
+  // drop annotations for measures that no longer exist
+  Object.keys(state.marks||{}).forEach(k=>{if(+k>=state.measures)delete state.marks[k];});}
 function renderMarksEditor(){
   const wrap=document.getElementById('marksEditor');if(!wrap)return;
   let h='';

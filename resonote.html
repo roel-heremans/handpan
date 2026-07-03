@@ -623,8 +623,8 @@ function buildScoreModel(st){
     tempo:st.tempo, beats:st.beats, sub:st.sub, measures:st.measures,
     marks:st.marks||{}, cells};
 }
-function layoutScore(model, contentW){
-  const per=Math.min(SCORE.measPerRow, model.measures)||1;
+function layoutScore(model, contentW, perRow){
+  const per=Math.min(perRow||SCORE.measPerRow, model.measures)||1;
   const measW=(contentW-(per-1)*SCORE.measGap)/per;
   const spm=model.beats*model.sub, colW=measW/spm;
   const rows=[]; let cur=null;

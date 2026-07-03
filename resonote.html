@@ -131,17 +131,17 @@
     .print-sheet{box-shadow:none;border-radius:0;max-width:none;margin:0;padding:0 6px}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
-.perform-overlay{position:fixed;inset:0;background:#1b1f26;z-index:120;display:flex;flex-direction:column;overflow:hidden}
-.perform-bar{display:flex;align-items:center;gap:14px;justify-content:flex-end;padding:12px 18px}
+.perform-overlay{position:fixed;inset:0;background:#1b1f26;z-index:120;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.perform-bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;justify-content:flex-end;padding:12px 18px}
 .perform-bar .btn{background:#2a303a;border-color:#3a424e;color:#eef1f5}
 .perform-bar .btn:hover{background:#333b47}
 .perform-tempo{margin-right:auto;color:#aab4c2;font-family:var(--mono);font-size:14px}
 .perform-pan-wrap{display:flex;justify-content:center;align-items:center;flex:0 0 auto;padding:6px}
-svg.perform-pan{width:min(38vh,340px);height:min(38vh,340px)}
-.perform-stage{position:relative;flex:1 1 auto;overflow:hidden;margin-top:8px}
-.perform-strip{position:absolute;top:0;left:0;will-change:transform}
+svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
+.perform-stage{position:relative;flex:0 0 auto;height:184px;overflow:hidden;margin-top:14px}
+.perform-strip{position:absolute;top:14px;left:0;will-change:transform}
 .perform-strip svg{background:#fff;border-radius:8px}
-.perform-playhead{position:absolute;top:8px;bottom:24px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
+.perform-playhead{position:absolute;top:14px;bottom:14px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
 </style>
 
 <div class="wrap">
@@ -410,7 +410,7 @@ function renderPan(){
   document.getElementById('instrName').innerHTML=`<b>${escapeHtml(state.instrument.name||'Custom')}</b> · ${meloVoices().length} notes`;
 }
 function litPan(v,hand){const c=hand==='L'?'lit-L':'lit';
-  document.querySelectorAll(`[data-voice="${v}"]`).forEach(el=>{el.classList.add(c);setTimeout(()=>el.classList.remove(c),260);});}
+  document.querySelectorAll(`#pan [data-voice="${v}"], #performPan [data-voice="${v}"]`).forEach(el=>{el.classList.add(c);setTimeout(()=>el.classList.remove(c),260);});}
 
 /* ===== GRID ===== */
 function cellClass(hand){return hand?'on-'+hand:'';}
@@ -476,7 +476,7 @@ function play(){resumeAudio();if(playing)return;playing=true;curStep=0;nextTime=
   playAnchor=nextTime;
   const btn=document.getElementById('playBtn');btn.textContent='■ Stop';btn.classList.remove('primary');btn.classList.add('playing');scheduler();
   if(!state.loop)setTimeout(()=>{if(playing&&!state.loop)stop();},totalSteps()*stepDur()*1000+400);}
-function stop(){playing=false;clearTimeout(timer);document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
+function stop(){playing=false;clearTimeout(timer);stopPerformLoop();document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');}
 
 let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0};

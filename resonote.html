@@ -136,6 +136,10 @@
 .perform-bar .btn{background:#2a303a;border-color:#3a424e;color:#eef1f5}
 .perform-bar .btn:hover{background:#333b47}
 .perform-tempo{margin-right:auto;color:#aab4c2;font-family:var(--mono);font-size:14px}
+.perf-speeds{display:flex;gap:5px}
+.perf-speed{background:#2a303a;border:1px solid #3a424e;color:#cfd6df;border-radius:7px;padding:6px 9px;font-size:13px;font-family:var(--mono);cursor:pointer}
+.perf-speed:hover{background:#333b47}
+.perf-speed.sel{background:#E8971E;border-color:#E8971E;color:#231a08;font-weight:600}
 .perform-pan-wrap{display:flex;justify-content:center;align-items:center;flex:0 0 auto;padding:6px}
 svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
 .perform-stage{position:relative;flex:0 0 auto;height:184px;overflow:hidden;margin-top:14px}
@@ -269,6 +273,12 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
   <div class="perform-bar">
     <button class="btn" id="performPrev">◀</button>
     <button class="btn" id="performPlay">⏸ Pause</button>
+    <span class="perf-speeds">
+      <button class="perf-speed" data-mult="0.5">0.5×</button>
+      <button class="perf-speed" data-mult="0.75">0.75×</button>
+      <button class="perf-speed sel" data-mult="1">1×</button>
+      <button class="perf-speed" data-mult="1.25">1.25×</button>
+    </span>
     <span class="perform-tempo" id="performTempo"></span>
     <button class="btn" id="performExit">✕ Exit</button>
   </div>
@@ -533,6 +543,8 @@ function enterPerform(){
   document.getElementById('performTempo').textContent=state.tempo+' bpm';
   document.getElementById('performOverlay').style.display='flex';
   perform.active=true;
+  perform.baseTempo=state.tempo;
+  document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.classList.toggle('sel',+b.dataset.mult===1));
   const stage=document.getElementById('performStage');
   perform.playheadX=Math.round(stage.clientWidth*0.30);
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
@@ -541,9 +553,20 @@ function enterPerform(){
   startPerformLoop();
   document.getElementById('performPlay').textContent='⏸ Pause';
 }
+function setPerformSpeed(mult){
+  const p=performPos();
+  state.tempo=Math.round((perform.baseTempo||state.tempo)*mult);
+  if(playing&&ctx)playAnchor=ctx.currentTime-p*stepDur();     // keep the scroll synced across the tempo change
+  const tv=document.getElementById('performTempo');if(tv)tv.textContent=state.tempo+' bpm';
+  document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.classList.toggle('sel',+b.dataset.mult===mult));
+}
 function exitPerform(){
   if(!perform.active)return;
+  if(perform.countTimer){clearTimeout(perform.countTimer);perform.countTimer=null;}
   stopPerformLoop(); stop(); perform.active=false;
+  if(perform.baseTempo){state.tempo=perform.baseTempo;
+    const t=document.getElementById('tempo'),tv=document.getElementById('tempoVal');
+    if(t)t.value=state.tempo; if(tv)tv.textContent=state.tempo;}
   document.getElementById('performOverlay').style.display='none';
 }
 // Toggle playback from inside the performance view; keeps the scroll loop and button label in sync.
@@ -922,6 +945,7 @@ document.getElementById('performBtn').addEventListener('click',()=>{resumeAudio(
 document.getElementById('performExit').addEventListener('click',exitPerform);
 document.getElementById('performPlay').addEventListener('click',togglePerformPlayback);
 document.getElementById('performPrev').addEventListener('click',performRewind);
+document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.addEventListener('click',()=>setPerformSpeed(+b.dataset.mult)));
 
 /* ===== SAMPLER (record / upload your pan) ===== */
 function sampLabel(v){return v==='D'?'D':(isPerc(v)?PERC.find(p=>p.id===v).label:v);}

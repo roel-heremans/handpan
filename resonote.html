@@ -505,11 +505,11 @@ function renderPerformStrip(){
   const per=Math.max(1,state.measures), MEASURE_W=perform.measureW;
   const contentW=per*MEASURE_W+(per-1)*SCORE.measGap;           // horizontal is natural (unchanged)
   // Enlarge only the VERTICAL metrics + number font for readability during play; x positions are untouched.
-  const save={half:SCORE.half,staffH:SCORE.staffH,tickTall:SCORE.tickTall,tickShort:SCORE.tickShort,numFont:SCORE.numFont,numStep:SCORE.numStep,measNumFont:SCORE.measNumFont};
+  const save={half:SCORE.half,staffH:SCORE.staffH,tickTall:SCORE.tickTall,tickShort:SCORE.tickShort,numFont:SCORE.numFont,numStep:SCORE.numStep,measNumFont:SCORE.measNumFont,tickGray:SCORE.tickGray,barW:SCORE.barW};
   const oy=84;                                                  // top room for the taller staff + bigger stacked numbers
   let body='', H=oy+100+22;
   try{
-    SCORE.half=48;SCORE.staffH=100;SCORE.tickTall=34;SCORE.tickShort=18;SCORE.numFont=26;SCORE.numStep=30;SCORE.measNumFont=13;
+    SCORE.half=48;SCORE.staffH=100;SCORE.tickTall=34;SCORE.tickShort=18;SCORE.numFont=26;SCORE.numStep=30;SCORE.measNumFont=13;SCORE.tickGray=[40,40,40];SCORE.barW=3;
     const lay=layoutScore(model, contentW, per);
     (lay.rows[0]?lay.rows[0].measures:[]).forEach(meas=>{body+=measureSVG(meas,oy);});
     H=oy+SCORE.staffH+22;
@@ -551,7 +551,8 @@ function enterPerform(){
   perform.baseTempo=state.tempo;
   document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.classList.toggle('sel',+b.dataset.mult===1));
   const stage=document.getElementById('performStage');
-  perform.playheadX=Math.round(stage.clientWidth*0.30);
+  perform.measureW=Math.max(200,Math.round(stage.clientWidth/3));   // ~3 measures span the stage
+  perform.playheadX=Math.round(stage.clientWidth*0.5);              // centered playhead
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
   renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right
   performMoveStrip(0);

@@ -631,33 +631,37 @@ function layoutScore(model, contentW){
 function printSym(v){if(v==='D')return 'D';if(isPerc(v))return PERC.find(p=>p.id===v).label;return v;}
 const SUBNAME={2:'eighths',3:'triplets',4:'sixteenths'};
 function slot(sym,cls){return sym==null?'<span class="ps-slot"><span class="ps-dot">·</span></span>':`<span class="ps-slot"><span class="ps-sym ${cls}">${sym}</span></span>`;}
-function renderPrintSheet(){
-  const sheet=document.getElementById('printSheet');if(!sheet)return;
-  const spm=state.beats*state.sub,order=orderOf();
-  const nm=((document.getElementById('patName').value||'').trim())||'Untitled pattern';
-  const subn=SUBNAME[state.sub]||(state.sub+' per beat');
-  let h=`<div class="ps-head"><h1>${escapeHtml(nm)}</h1><div class="ps-meta">${escapeHtml(state.instrument.name||'Custom')} &nbsp;·&nbsp; ${state.beats} beats × ${subn} &nbsp;·&nbsp; ${state.tempo} bpm</div></div>`;
-  for(let m=0;m<state.measures;m++){
-    h+=`<div class="ps-measure"><div class="ps-mlabel">Measure ${m+1}</div><div class="ps-row">`;
-    for(let beat=0;beat<state.beats;beat++){
-      h+='<div class="ps-beat">';
-      for(let sd=0;sd<state.sub;sd++){
-        const s=m*spm+beat*state.sub+sd,st=state.grid[s]||{};
-        const R=order.filter(v=>st[v]==='R').map(printSym), L=order.filter(v=>st[v]==='L').map(printSym);
-        // right hand: two slots, single notes hug the divider (bottom slot)
-        const rTop=R.length>1?R[0]:null, rBot=R.length>1?R.slice(1).join('+'):(R[0]||null);
-        // left hand: two slots, single notes hug the divider (top slot)
-        const lTop=L[0]||null, lBot=L.length>1?L.slice(1).join('+'):null;
-        h+='<div class="ps-col">'+slot(rTop,'ps-r')+slot(rBot,'ps-r')+'<span class="ps-hr"></span>'+slot(lTop,'ps-l')+slot(lBot,'ps-l')+'</div>';
-      }
-      h+='</div>';
-    }
-    h+='</div></div>';
-  }
-  h+=`<div class="ps-legend"><b>Layout:</b> each slot stacks the right hand (<span class="ps-r">red</span>, top two) above the left hand (<span class="ps-l">black</span>, bottom two), split by the gray line. · = not played.<br>
-    <b>Strokes:</b> <b>D</b> ding · <b>d</b> shoulder · <b>t</b> tak · <b>s</b> slap · <b>g</b> ghost · numbers = tone fields</div>`;
-  sheet.innerHTML=h;
+function scoreSvgHead(model,W){
+  let h=`<text x="${W/2}" y="34" text-anchor="middle" font-family="var(--sans)" font-size="22" fill="#141414">${escapeHtml(model.title)}</text>`;
+  if(model.artist)h+=`<text x="${W/2}" y="56" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="#555">${escapeHtml(model.artist)}</text>`;
+  h+=`<text x="0" y="92" font-family="var(--sans)" font-size="12" fill="#141414">&#9833; = ${model.tempo}</text>`;
+  return h;
 }
+function measureSVG(meas,oy){
+  const top=oy, mid=oy+SCORE.half, bot=oy+SCORE.staffH, C=SCORE.tickGray;
+  let h=`<line x1="${meas.x}" y1="${top}" x2="${meas.x}" y2="${bot}" stroke="rgb(20,20,20)" stroke-width="${SCORE.barW}"/>`;
+  h+=`<line x1="${meas.x}" y1="${mid}" x2="${meas.x+meas.w}" y2="${mid}" stroke="rgb(${C})" stroke-width="0.6"/>`;
+  meas.ticks.forEach((t,i)=>{if(i===0)return;const th=t.tall?SCORE.tickTall:SCORE.tickShort;
+    h+=`<line x1="${t.x}" y1="${mid-th/2}" x2="${t.x}" y2="${mid+th/2}" stroke="rgb(${C})" stroke-width="0.6"/>`;});
+  h+=`<text x="${meas.x+2}" y="${top-3}" font-family="var(--sans)" font-size="${SCORE.measNumFont}" fill="rgb(${SCORE.measNumGray})">${meas.m}</text>`;
+  if(meas.part)h+=`<g><rect x="${meas.x}" y="${top-30}" width="${8+meas.part.length*7}" height="18" fill="none" stroke="#141414" stroke-width="1"/><text x="${meas.x+4}" y="${top-17}" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.part)}</text></g>`;
+  if(meas.section)h+=`<text x="${meas.x+meas.w/2}" y="${top-16}" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.section)}</text>`;
+  if(meas.tempo)h+=`<text x="${meas.x}" y="${top-3}" font-family="var(--sans)" font-size="11" fill="#141414">&#9833; = ${meas.tempo}</text>`;
+  if(meas.expr)h+=`<text x="${meas.x}" y="${bot+12}" font-family="var(--sans)" font-size="10" font-style="italic" fill="#555">${escapeHtml(meas.expr)}</text>`;
+  meas.numbers.forEach(n=>{const col=n.role==='R'?`rgb(${SCORE.colorR})`:`rgb(${SCORE.colorL})`;
+    h+=`<text x="${n.x}" y="${oy+n.y}" text-anchor="middle" font-family="var(--mono)" font-size="${SCORE.numFont}" fill="${col}">${escapeHtml(n.sym)}</text>`;});
+  return h;
+}
+function renderScoreSVG(){
+  const sheet=document.getElementById('printSheet');if(!sheet)return;
+  const W=760, model=buildScoreModel(state), lay=layoutScore(model,W);
+  let y=120; let body=scoreSvgHead(model,W);
+  lay.rows.forEach(row=>{row.measures.forEach(meas=>{body+=measureSVG(meas,y);});
+    y+=SCORE.staffH+SCORE.rowGap;});
+  body+=`<text x="${W/2}" y="${y+10}" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#555">${escapeHtml(lay.footer)}  1/1</text>`;
+  sheet.innerHTML=`<svg width="${W}" height="${y+30}" viewBox="0 0 ${W} ${y+30}" style="background:#fff;max-width:100%">${body}</svg>`;
+}
+const renderPrintSheet=renderScoreSVG;
 function sheetName(){return ((document.getElementById('patName').value||'').trim())||'Untitled pattern';}
 function drawSlot(doc,sym,xc,yb,rgb){
   if(sym==null){doc.setTextColor(205,205,205);doc.setFont('courier','normal');doc.text('.',xc,yb,{align:'center'});}

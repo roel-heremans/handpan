@@ -460,7 +460,7 @@ function renderReadout(){
 }
 
 /* ===== PLAYBACK ===== */
-let playing=false,curStep=0,nextTime=0,timer=null,playAnchor=0;
+let playing=false,curStep=0,nextTime=0,timer=null,playAnchor=0,endTimer=null;
 const LOOKAHEAD=25,AHEAD=.12,stepDur=()=>(60/state.tempo)/state.sub;
 function scheduleStep(step,t){
   const st=state.grid[step]||{};Object.keys(st).forEach(v=>playVoice(v,t,st[v]));
@@ -475,9 +475,10 @@ function scheduler(){while(nextTime<ctx.currentTime+AHEAD){scheduleStep(curStep,
 function play(){resumeAudio();if(playing)return;playing=true;curStep=0;nextTime=ctx.currentTime+.06;
   playAnchor=nextTime;
   const btn=document.getElementById('playBtn');btn.textContent='■ Stop';btn.classList.remove('primary');btn.classList.add('playing');scheduler();
-  if(!state.loop)setTimeout(()=>{if(playing&&!state.loop)stop();},totalSteps()*stepDur()*1000+400);}
-function stop(){playing=false;clearTimeout(timer);stopPerformLoop();document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
-  const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');}
+  if(!state.loop)endTimer=setTimeout(()=>{if(playing&&!state.loop)stop();},totalSteps()*stepDur()*1000+400);}
+function stop(){playing=false;clearTimeout(timer);clearTimeout(endTimer);stopPerformLoop();document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
+  const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');
+  const pb=document.getElementById('performPlay');if(pb)pb.textContent='▶ Play';}
 
 let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0};
 function renderPerformPan(){
@@ -523,14 +524,14 @@ function startPerformLoop(){if(!perform.raf)perform.raf=requestAnimationFrame(pe
 function stopPerformLoop(){if(perform.raf){cancelAnimationFrame(perform.raf);perform.raf=0;}}
 function enterPerform(){
   if(perform.active)return;
-  renderPerformPan(); renderPerformStrip();
   document.getElementById('performTempo').textContent=state.tempo+' bpm';
   document.getElementById('performOverlay').style.display='flex';
   perform.active=true;
   const stage=document.getElementById('performStage');
   perform.playheadX=Math.round(stage.clientWidth*0.30);
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
-  if(!playing)play();
+  renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right
+  stop(); play();                                // clean start from the top (clears any stale end-timer)
   startPerformLoop();
   document.getElementById('performPlay').textContent='■ Stop';
 }
@@ -538,6 +539,11 @@ function exitPerform(){
   if(!perform.active)return;
   stopPerformLoop(); stop(); perform.active=false;
   document.getElementById('performOverlay').style.display='none';
+}
+// Toggle playback from inside the performance view; keeps the scroll loop and button label in sync.
+function togglePerformPlayback(){
+  if(playing){stop();}                           // stop() resets the #performPlay label to ▶ Play
+  else{play();startPerformLoop();const b=document.getElementById('performPlay');if(b)b.textContent='■ Stop';}
 }
 
 /* ===== INSTRUMENT EDITOR ===== */
@@ -680,6 +686,7 @@ document.getElementById('removeField').addEventListener('click',()=>{if(state.in
 document.querySelectorAll('#percPads .ppad').forEach(pad=>pad.addEventListener('click',()=>{resumeAudio();playVoice(pad.dataset.voice,null,null);}));
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&perform.active){exitPerform();return;}
+  if(e.key===' '&&perform.active){e.preventDefault();togglePerformPlayback();return;}
   if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
   if(e.key===' '){e.preventDefault();playing?stop():play();return;}
   const k=e.key.toLowerCase();
@@ -899,10 +906,7 @@ document.getElementById('closePrint').addEventListener('click',()=>{document.get
 window.addEventListener('beforeprint',renderPrintSheet);
 document.getElementById('performBtn').addEventListener('click',()=>{resumeAudio();enterPerform();});
 document.getElementById('performExit').addEventListener('click',exitPerform);
-document.getElementById('performPlay').addEventListener('click',()=>{
-  if(playing){stop();document.getElementById('performPlay').textContent='▶ Play';}
-  else{play();startPerformLoop();document.getElementById('performPlay').textContent='■ Stop';}
-});
+document.getElementById('performPlay').addEventListener('click',togglePerformPlayback);
 
 /* ===== SAMPLER (record / upload your pan) ===== */
 function sampLabel(v){return v==='D'?'D':(isPerc(v)?PERC.find(p=>p.id===v).label:v);}

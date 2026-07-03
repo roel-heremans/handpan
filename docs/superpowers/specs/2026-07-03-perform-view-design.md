@@ -71,8 +71,9 @@ A new full-screen overlay `#performOverlay` (same pattern as the existing
 ### Timing note
 Playback runs at the single global `state.tempo` (per-measure tempo marks are
 display-only and are not applied by the scheduler — unchanged behavior), so the
-step→x mapping is uniform. The scroll anchor is re-synced if the tempo is changed
-while performing.
+step→x mapping is uniform. The tempo control lives in the editor, which the
+overlay fully covers, so tempo cannot change while performing — the anchor stays
+valid for the duration of a performance.
 
 ## Components and boundaries
 

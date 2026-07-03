@@ -35,12 +35,12 @@
   svg.pan{width:100%;max-width:320px;height:auto;touch-action:manipulation}
   .field{cursor:pointer} .field circle{transition:fill .12s,stroke .12s}
   .field:hover circle{stroke:var(--bronze)}
-  .field.lit circle{fill:var(--bronze);stroke:var(--bronze)} .field.lit text.num{fill:#231a08}
-  .field.lit-L circle{fill:var(--hand-left);stroke:var(--hand-left)} .field.lit-L text.num{fill:#062a11}
+  .field.lit circle{fill:var(--hand-right);stroke:var(--hand-right)} .field.lit text.num{fill:#3a2400}
+  .field.lit-L circle{fill:var(--hand-left);stroke:var(--hand-left)} .field.lit-L text.num{fill:#04203f}
   .field.bottom circle{stroke-dasharray:3 3}
   .ding-hit{cursor:pointer} .ding-hit:hover .ding-face{stroke:var(--ding)}
-  .ding-hit.lit .ding-face{fill:var(--ding)} .ding-hit.lit .ding-label{fill:#2a2003}
-  .ding-hit.lit-L .ding-face{fill:var(--hand-left)} .ding-hit.lit-L .ding-label{fill:#062a11}
+  .ding-hit.lit .ding-face{fill:var(--hand-right)} .ding-hit.lit .ding-label{fill:#3a2400}
+  .ding-hit.lit-L .ding-face{fill:var(--hand-left)} .ding-hit.lit-L .ding-label{fill:#04203f}
   .pan-note-name{font-size:8px;fill:var(--muted);font-family:var(--mono)}
   .underside-cap{font-size:8.5px;fill:var(--muted);font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
   .instr-name{text-align:center;color:var(--muted);font-size:13px;margin-top:10px;font-family:var(--mono)} .instr-name b{color:var(--text)}
@@ -73,13 +73,14 @@
   .cellbox{width:100%;height:100%;border-radius:6px;background:var(--steel-3);border:1px solid transparent;cursor:pointer;transition:transform .06s,background .1s}
   .cellbox:hover{background:#3c454d}
   .cellbox.on-R{background:var(--hand-right);box-shadow:inset 0 0 0 1.5px var(--hand-ring)}
-  .cellbox.on-L{background:var(--hand-left);box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+  .cellbox.on-L{background:var(--hand-left);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
   .cellbox:active{transform:scale(.86)}
   td.cell.beatstart{border-left:1px solid var(--line)}
   td.cell.measurestart{border-left:2px solid var(--bronze-line)} th.measurestart{border-left:2px solid var(--bronze-line)}
   col.playcol{background:var(--teal-dim)}
   .readout{font-family:var(--mono);font-size:14px;line-height:1.9;color:var(--text);background:var(--steel-0);border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
-  .readout .rest{color:#5a656d} .readout .bar{color:var(--bronze);padding:0 4px} .readout .lft{color:var(--hand-left)}
+  .readout .rest{color:#aab3bd} .readout .bar{color:var(--bronze);padding:0 4px}
+  .readout .lft{color:var(--hand-left)} .readout .rgt{color:var(--hand-right)}
   .legend{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.9}
   .legend code{background:var(--steel-2);padding:1px 6px;border-radius:5px;font-family:var(--mono);color:var(--text)}
   .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:3px}
@@ -427,7 +428,7 @@ function renderReadout(){
     if(s>0&&s%spm===0)out+='<span class="bar">| </span>';else if(s>0&&s%state.sub===0)out+='  ';
     const st=state.grid[s]||{},keys=Object.keys(st).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
     if(!keys.length){out+='<span class="rest">–</span> ';continue;}
-    out+=keys.map(v=>{const sym=isPerc(v)?PERC.find(p=>p.id===v).label:v;return st[v]==='L'?`<span class="lft">${sym}</span>`:sym;}).join('+')+' ';
+    out+=keys.map(v=>{const sym=isPerc(v)?PERC.find(p=>p.id===v).label:v;return st[v]==='L'?`<span class="lft">${sym}</span>`:`<span class="rgt">${sym}</span>`;}).join('+')+' ';
   }
   document.getElementById('readout').innerHTML=out.trim()||'<span class="rest">empty pattern — tap the grid to place notes</span>';
 }

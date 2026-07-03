@@ -123,22 +123,7 @@
   /* ---- printable sheet ---- */
   .print-overlay{position:fixed;inset:0;background:rgba(8,10,12,.6);z-index:100;overflow:auto;padding:22px}
   .ps-toolbar{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
-  .print-sheet{background:#fff;color:#111;max-width:840px;margin:0 auto;padding:34px 40px;border-radius:8px;font-family:var(--mono);box-shadow:0 12px 40px rgba(0,0,0,.4)}
-  .ps-head h1{font-family:var(--sans);font-size:23px;margin:0 0 4px;color:#111;font-weight:700}
-  .ps-meta{font-family:var(--sans);font-size:13px;color:#555;margin-bottom:22px}
-  .ps-measure{margin-bottom:15px;break-inside:avoid;page-break-inside:avoid}
-  .ps-mlabel{font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#999;margin-bottom:3px}
-  .ps-row{display:flex;gap:16px;border-top:1.5px solid #222;border-bottom:1.5px solid #222;padding:7px 2px}
-  .ps-beat{display:flex;gap:1px;padding-right:16px;border-right:1px solid #ddd}
-  .ps-beat:last-child{border-right:0;padding-right:0}
-  .ps-col{width:24px;display:flex;flex-direction:column;align-items:center}
-  .ps-slot{height:17px;display:flex;align-items:center;justify-content:center;line-height:1}
-  .ps-hr{width:100%;height:0;border-top:1px solid #c8c8c8;margin:2px 0}
-  .ps-sym{font-size:14px;font-weight:700;line-height:1}
-  .ps-r{color:#d81f1f} .ps-l{color:#111}
-  .ps-dot{color:#cfcfcf;font-size:15px;line-height:1}
-  .ps-legend{font-family:var(--sans);font-size:12px;color:#555;margin-top:22px;border-top:1px solid #ddd;padding-top:12px;line-height:1.9}
-  .ps-legend b{color:#222}
+  .print-sheet{background:#fff;color:#111;max-width:840px;margin:0 auto;padding:34px 40px;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
   @media print{
     body{padding:0;background:#fff}
     .wrap,.toast,.ps-toolbar{display:none !important}
@@ -360,10 +345,10 @@ function playVoice(v,t,hand){
 function renderPan(){
   const svg=document.getElementById('pan'),cx=150,cy=140,R=92,tops=[],bots=[];
   state.instrument.fields.forEach((f,i)=>{(f.bottom?bots:tops).push({note:f.note,num:i+1,ang:f.ang,rad:f.rad});});
-  let h=`<circle cx="${cx}" cy="${cy}" r="128" fill="#191d21" stroke="#0e1113" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="116" fill="none" stroke="#252b30" stroke-width="1"/>`;
+  let h=`<circle cx="${cx}" cy="${cy}" r="128" fill="var(--pan-fill)" stroke="#aab4c2" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="116" fill="none" stroke="#b4bdca" stroke-width="1"/>`;
   // Zigzag handpan layout: 1 at the bottom, then alternating up the sides
   // (even numbers climb the left, odd numbers climb the right), converging near the top.
-  const drawField=(f,x,y)=>{h+=`<g class="field" data-voice="${f.num}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="17" fill="var(--steel-3)" stroke="var(--line)" stroke-width="1.5"/>
+  const drawField=(f,x,y)=>{h+=`<g class="field" data-voice="${f.num}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="17" fill="var(--pan-pod)" stroke="#c2cad6" stroke-width="1"/>
       ${isSampled(String(f.num))?`<circle cx="${(x+11).toFixed(1)}" cy="${(y-11).toFixed(1)}" r="3" fill="var(--teal)"/>`:''}
       <text class="num" x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)" font-family="var(--mono)">${f.num}</text>
       <text class="pan-note-name" x="${x.toFixed(1)}" y="${(y+27).toFixed(1)}" text-anchor="middle">${f.note}</text></g>`;};
@@ -375,8 +360,8 @@ function renderPan(){
   const N=ring.length||1;
   ring.forEach((num,j)=>{const f=tops.find(t=>t.num===num);const bta=j*2*Math.PI/N;
     drawField(f, cx+R*Math.sin(bta), cy+R*Math.cos(bta));});
-  h+=`<g class="ding-hit" data-voice="D"><circle class="ding-face" cx="${cx}" cy="${cy}" r="30" fill="var(--steel-2)" stroke="var(--line)" stroke-width="2"/>
-      <line x1="${cx-21}" y1="${cy}" x2="${cx+21}" y2="${cy}" stroke="#0f1214"/><line x1="${cx}" y1="${cy-21}" x2="${cx}" y2="${cy+21}" stroke="#0f1214"/>
+  h+=`<g class="ding-hit" data-voice="D"><circle class="ding-face" cx="${cx}" cy="${cy}" r="30" fill="var(--pan-pod)" stroke="#c2cad6" stroke-width="1.5"/>
+      <line x1="${cx-21}" y1="${cy}" x2="${cx+21}" y2="${cy}" stroke="#d3dae3"/><line x1="${cx}" y1="${cy-21}" x2="${cx}" y2="${cy+21}" stroke="#d3dae3"/>
       <text class="ding-label" x="${cx}" y="${cy-2}" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ding)" font-family="var(--mono)">D</text>
       <text class="pan-note-name" x="${cx}" y="${cy+13}" text-anchor="middle">${state.instrument.ding}</text></g>`;
   if(bots.length && state.showBottom){
@@ -612,10 +597,10 @@ let toastTimer;function toast(m){const t=document.getElementById('toast');t.text
 
 /* ===== SCORE ENGINE (shared by SVG preview + PDF) ===== */
 const SCORE={
-  measGap:14, rowGap:34, measPerRow:5,
+  measGap:14, rowGap:58, measPerRow:5,
   staffH:44, half:22,            // centerline at +half from staff top
   barW:1.4, tickTall:16, tickShort:9, tickGray:[150,150,150], ink:[20,20,20],
-  numFont:11, numStep:12,        // vertical stack step for stacked same-hand notes
+  numFont:12, numStep:13,        // vertical stack step for stacked same-hand notes
   colorR:[232,151,30], colorL:[74,128,192],
   measNumFont:8, measNumGray:[150,150,150]
 };
@@ -655,31 +640,37 @@ function layoutScore(model, contentW){
     cur.measures.push({m:m+1, x:x0, w:measW, barX:x0, ticks, numbers,
       part:mk.part||null, section:mk.section||null, tempo:mk.tempo||null, expr:mk.expr||null});
   }
+  // Show the piece's starting tempo once, on measure 1 (unless the user already set one there)
+  if(rows[0]&&rows[0].measures[0]&&!rows[0].measures[0].tempo)rows[0].measures[0].tempo=model.tempo;
   const footer=`${model.title}${model.artist?' - '+model.artist:''} | ${model.scale}`;
   return {rows, footer, measW, spm};
 }
 
 /* ===== PRINTABLE SHEET ===== */
 function printSym(v){if(v==='D')return 'D';if(isPerc(v))return PERC.find(p=>p.id===v).label;return v;}
-const SUBNAME={2:'eighths',3:'triplets',4:'sixteenths'};
-function slot(sym,cls){return sym==null?'<span class="ps-slot"><span class="ps-dot">·</span></span>':`<span class="ps-slot"><span class="ps-sym ${cls}">${sym}</span></span>`;}
 function scoreSvgHead(model,W){
-  let h=`<text x="${W/2}" y="34" text-anchor="middle" font-family="var(--sans)" font-size="22" fill="#141414">${escapeHtml(model.title)}</text>`;
-  if(model.artist)h+=`<text x="${W/2}" y="56" text-anchor="middle" font-family="var(--sans)" font-size="14" fill="#555">${escapeHtml(model.artist)}</text>`;
-  h+=`<text x="0" y="92" font-family="var(--sans)" font-size="12" fill="#141414">&#9833; = ${model.tempo}</text>`;
+  let h=`<text x="${W/2}" y="40" text-anchor="middle" font-family="var(--sans)" font-size="24" font-weight="700" fill="#141414">${escapeHtml(model.title)}</text>`;
+  if(model.artist)h+=`<text x="${W/2}" y="62" text-anchor="middle" font-family="var(--sans)" font-size="15" fill="#555">${escapeHtml(model.artist)}</text>`;
   return h;
 }
 function measureSVG(meas,oy){
-  const top=oy, mid=oy+SCORE.half, bot=oy+SCORE.staffH, C=SCORE.tickGray;
-  let h=`<line x1="${meas.x}" y1="${top}" x2="${meas.x}" y2="${bot}" stroke="rgb(20,20,20)" stroke-width="${SCORE.barW}"/>`;
-  h+=`<line x1="${meas.x}" y1="${mid}" x2="${meas.x+meas.w}" y2="${mid}" stroke="rgb(${C})" stroke-width="0.6"/>`;
+  const top=oy, mid=oy+SCORE.half, bot=oy+SCORE.staffH, C=SCORE.tickGray, x=meas.x;
+  let h=`<line x1="${x}" y1="${top}" x2="${x}" y2="${bot}" stroke="rgb(20,20,20)" stroke-width="${SCORE.barW}"/>`;
+  h+=`<line x1="${x}" y1="${mid}" x2="${x+meas.w}" y2="${mid}" stroke="rgb(${C})" stroke-width="0.6"/>`;
   meas.ticks.forEach((t,i)=>{if(i===0)return;const th=t.tall?SCORE.tickTall:SCORE.tickShort;
     h+=`<line x1="${t.x}" y1="${mid-th/2}" x2="${t.x}" y2="${mid+th/2}" stroke="rgb(${C})" stroke-width="0.6"/>`;});
-  h+=`<text x="${meas.x+2}" y="${top-3}" font-family="var(--sans)" font-size="${SCORE.measNumFont}" fill="rgb(${SCORE.measNumGray})">${meas.m}</text>`;
-  if(meas.part)h+=`<g><rect x="${meas.x}" y="${top-30}" width="${8+meas.part.length*7}" height="18" fill="none" stroke="#141414" stroke-width="1"/><text x="${meas.x+4}" y="${top-17}" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.part)}</text></g>`;
-  if(meas.section)h+=`<text x="${meas.x+meas.w/2}" y="${top-16}" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.section)}</text>`;
-  if(meas.tempo)h+=`<text x="${meas.x}" y="${top-3}" font-family="var(--sans)" font-size="11" fill="#141414">&#9833; = ${meas.tempo}</text>`;
-  if(meas.expr)h+=`<text x="${meas.x}" y="${bot+12}" font-family="var(--sans)" font-size="10" font-style="italic" fill="#555">${escapeHtml(meas.expr)}</text>`;
+  // measure number (tiny, hugs the staff)
+  h+=`<text x="${x+2}" y="${top-4}" font-family="var(--sans)" font-size="${SCORE.measNumFont}" fill="rgb(${SCORE.measNumGray})">${meas.m}</text>`;
+  // tempo mark — top tier
+  if(meas.tempo)h+=`<text x="${x}" y="${top-44}" font-family="var(--sans)" font-size="13" fill="#141414">&#9833; = ${meas.tempo}</text>`;
+  // part label (boxed) + section label — middle tier
+  let boxW=0;
+  if(meas.part){boxW=10+meas.part.length*7;
+    h+=`<rect x="${x}" y="${top-32}" width="${boxW}" height="15" rx="2" fill="none" stroke="#141414" stroke-width="1"/><text x="${x+5}" y="${top-21}" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.part)}</text>`;}
+  if(meas.section){const sx=meas.part?x+boxW+8:x+meas.w/2, anc=meas.part?'start':'middle';
+    h+=`<text x="${sx}" y="${top-21}" text-anchor="${anc}" font-family="var(--sans)" font-size="11" fill="#141414">${escapeHtml(meas.section)}</text>`;}
+  // expression (rall. etc) below the staff
+  if(meas.expr)h+=`<text x="${x}" y="${bot+13}" font-family="var(--sans)" font-size="11" font-style="italic" fill="#555">${escapeHtml(meas.expr)}</text>`;
   meas.numbers.forEach(n=>{const col=n.role==='R'?`rgb(${SCORE.colorR})`:`rgb(${SCORE.colorL})`;
     h+=`<text x="${n.x}" y="${oy+n.y}" text-anchor="middle" font-family="var(--mono)" font-size="${SCORE.numFont}" fill="${col}">${escapeHtml(n.sym)}</text>`;});
   return h;
@@ -687,7 +678,7 @@ function measureSVG(meas,oy){
 function renderScoreSVG(){
   const sheet=document.getElementById('printSheet');if(!sheet)return;
   const W=760, model=buildScoreModel(state), lay=layoutScore(model,W);
-  let y=120; let body=scoreSvgHead(model,W);
+  let y=128; let body=scoreSvgHead(model,W);
   lay.rows.forEach(row=>{row.measures.forEach(meas=>{body+=measureSVG(meas,y);});
     y+=SCORE.staffH+SCORE.rowGap;});
   body+=`<text x="${W/2}" y="${y+10}" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#555">${escapeHtml(lay.footer)}  1/1</text>`;
@@ -695,10 +686,6 @@ function renderScoreSVG(){
 }
 const renderPrintSheet=renderScoreSVG;
 function sheetName(){return ((document.getElementById('patName').value||'').trim())||'Untitled pattern';}
-function drawSlot(doc,sym,xc,yb,rgb){
-  if(sym==null){doc.setTextColor(205,205,205);doc.setFont('courier','normal');doc.text('.',xc,yb,{align:'center'});}
-  else{doc.setTextColor(rgb[0],rgb[1],rgb[2]);doc.setFont('courier','bold');doc.text(String(sym),xc,yb,{align:'center'});}
-}
 function pdfPanPage(doc,model){
   const PW=595, cx=PW/2, cy=470, R=150;
   doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(20,20,20);
@@ -723,6 +710,15 @@ function pdfPanPage(doc,model){
   doc.setFont('helvetica','normal');doc.setFontSize(13);doc.setTextColor(20,20,20);
   doc.text(model.scale,cx,cy+R+70,{align:'center'});
 }
+// Draw a vector quarter-note + "= bpm" (jsPDF's Helvetica can't encode the U+2669 glyph)
+function pdfTempo(doc,x,yb,bpm){
+  doc.setFillColor(20,20,20);
+  doc.ellipse(x+2.3,yb-1.1,2.4,1.7,'F');                    // note head (slightly above baseline)
+  doc.setDrawColor(20,20,20);doc.setLineWidth(0.9);
+  doc.line(x+4.6,yb-1.6,x+4.6,yb-10);                       // stem
+  doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(20,20,20);
+  doc.text('= '+bpm,x+8.5,yb);
+}
 function buildPDF(){
   if(!(window.jspdf&&window.jspdf.jsPDF))return false;
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'pt',format:'a4'});
@@ -733,9 +729,9 @@ function buildPDF(){
   const lay=layoutScore(model,contentW);
   // paginate rows by vertical fit
   const rowH=SCORE.staffH+SCORE.rowGap;
-  let pages=[[]], yUsed=110;
+  let pages=[[]], yUsed=132;
   lay.rows.forEach(row=>{
-    if(yUsed+rowH>PH-70){pages.push([]);yUsed=90;}
+    if(yUsed+rowH>PH-70){pages.push([]);yUsed=96;}
     pages[pages.length-1].push({row,y:yUsed});yUsed+=rowH;
   });
   const total=pages.length;
@@ -747,8 +743,6 @@ function buildPDF(){
       doc.setFont('helvetica','bold');doc.setFontSize(18);setInk([20,20,20]);
       doc.text(model.title,PW/2,54,{align:'center'});
       if(model.artist){doc.setFont('helvetica','normal');doc.setFontSize(12);setInk([70,70,70]);doc.text(model.artist,PW/2,72,{align:'center'});}
-      doc.setFont('helvetica','normal');doc.setFontSize(11);setInk([20,20,20]);
-      doc.text('♩ = '+model.tempo,M,96);
     }
     pageRows.forEach(({row,y})=>{
       row.measures.forEach(meas=>{
@@ -759,14 +753,21 @@ function buildPDF(){
         doc.line(ax,mid,ax+meas.w,mid);
         meas.ticks.forEach((t,i)=>{if(i===0)return;const th=t.tall?SCORE.tickTall:SCORE.tickShort;
           doc.line(M+t.x,mid-th/2,M+t.x,mid+th/2);});
+        // measure number (tiny, hugs the staff)
         doc.setFont('helvetica','normal');doc.setFontSize(SCORE.measNumFont);setInk(SCORE.measNumGray);
-        doc.text(String(meas.m),ax+2,top-3);
+        doc.text(String(meas.m),ax+2,top-4);
+        // tempo mark — top tier (vector note glyph)
+        if(meas.tempo)pdfTempo(doc,ax,top-44,meas.tempo);
+        // part label (boxed) + section — middle tier
+        let boxW=0;
         if(meas.part){doc.setDrawColor(20,20,20);doc.setLineWidth(0.8);
-          const w=8+meas.part.length*6;doc.rect(ax,top-30,w,16);
-          doc.setFontSize(11);setInk([20,20,20]);doc.text(meas.part,ax+4,top-19);}
-        if(meas.section){doc.setFontSize(11);setInk([20,20,20]);doc.text(meas.section,ax+meas.w/2,top-17,{align:'center'});}
-        if(meas.tempo){doc.setFontSize(11);setInk([20,20,20]);doc.text('♩ = '+meas.tempo,ax,top-3);}
-        if(meas.expr){doc.setFontSize(10);doc.setFont('helvetica','italic');setInk([90,90,90]);doc.text(meas.expr,ax,bot+11);doc.setFont('helvetica','normal');}
+          boxW=10+meas.part.length*6;doc.roundedRect(ax,top-32,boxW,15,2,2);
+          doc.setFont('helvetica','normal');doc.setFontSize(11);setInk([20,20,20]);doc.text(meas.part,ax+5,top-21);}
+        if(meas.section){doc.setFont('helvetica','normal');doc.setFontSize(11);setInk([20,20,20]);
+          if(meas.part)doc.text(meas.section,ax+boxW+8,top-21);
+          else doc.text(meas.section,ax+meas.w/2,top-21,{align:'center'});}
+        // expression (rall. etc) below the staff
+        if(meas.expr){doc.setFontSize(11);doc.setFont('helvetica','italic');setInk([90,90,90]);doc.text(meas.expr,ax,bot+13);doc.setFont('helvetica','normal');}
         meas.numbers.forEach(n=>{const c=n.role==='R'?SCORE.colorR:SCORE.colorL;
           doc.setFont('courier','normal');doc.setFontSize(SCORE.numFont);setInk(c);
           doc.text(String(n.sym),M+n.x,y+n.y,{align:'center'});});

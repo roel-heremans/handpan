@@ -267,7 +267,7 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
 
 <div class="perform-overlay" id="performOverlay" style="display:none">
   <div class="perform-bar">
-    <button class="btn" id="performPlay">■ Stop</button>
+    <button class="btn" id="performPlay">⏸ Pause</button>
     <span class="perform-tempo" id="performTempo"></span>
     <button class="btn" id="performExit">✕ Exit</button>
   </div>
@@ -480,7 +480,7 @@ function stop(){playing=false;clearTimeout(timer);clearTimeout(endTimer);stopPer
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');
   const pb=document.getElementById('performPlay');if(pb)pb.textContent='▶ Play';}
 
-let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0};
+let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0, pausedStep:null};
 function renderPerformPan(){
   const svg=document.getElementById('performPan'); if(!svg)return;
   svg.innerHTML=panInnerSVG();
@@ -538,7 +538,7 @@ function enterPerform(){
   renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right
   stop(); play();                                // clean start from the top (clears any stale end-timer)
   startPerformLoop();
-  document.getElementById('performPlay').textContent='■ Stop';
+  document.getElementById('performPlay').textContent='⏸ Pause';
 }
 function exitPerform(){
   if(!perform.active)return;
@@ -546,10 +546,10 @@ function exitPerform(){
   document.getElementById('performOverlay').style.display='none';
 }
 // Toggle playback from inside the performance view; keeps the scroll loop and button label in sync.
-function togglePerformPlayback(){
-  if(playing){stop();}                           // stop() resets the #performPlay label to ▶ Play
-  else{play();startPerformLoop();const b=document.getElementById('performPlay');if(b)b.textContent='■ Stop';}
-}
+function performPause(){if(!playing)return;perform.pausedStep=Math.round(performPos());stop();}
+function performResume(){play(perform.pausedStep||0);startPerformLoop();perform.pausedStep=null;
+  const b=document.getElementById('performPlay');if(b)b.textContent='⏸ Pause';}
+function togglePerformPlayback(){if(playing)performPause();else performResume();}
 
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}

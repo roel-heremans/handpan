@@ -93,6 +93,11 @@
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:6px}
   .txt{background:var(--steel-2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:14px;flex:1;min-width:140px}
   .txt:focus{outline:none;border-color:var(--bronze)}
+  .marks-editor{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .mark-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .mark-row .mlab{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:74px}
+  .mark-row input{background:var(--steel-2);border:1px solid var(--line);border-radius:7px;padding:5px 7px;font-size:12px;color:var(--text)}
+  .mark-row input.mpart{width:74px}.mark-row input.msec{width:74px}.mark-row input.mtempo{width:56px}.mark-row input.mexpr{width:84px}
   .saved-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
   .saved{display:flex;align-items:center;gap:10px;background:var(--steel-2);border:1px solid var(--line-soft);border-radius:9px;padding:9px 12px}
   .saved .meta{flex:1;min-width:0} .saved .meta .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -195,6 +200,12 @@
           <button class="btn tiny" id="printBtn">Printable sheet</button>
         </div>
         <div id="grid" class="grid-stack"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Score details</h2>
+        <div class="row"><input class="txt" id="artistInput" placeholder="Artist / subtitle" maxlength="60" /></div>
+        <div id="marksEditor" class="marks-editor"></div>
       </div>
 
       <div class="panel">
@@ -538,12 +549,33 @@ function checkStorage(){
 function syncControls(){document.getElementById('tempo').value=state.tempo;document.getElementById('tempoVal').textContent=state.tempo;
   document.getElementById('beats').value=state.beats;document.getElementById('sub').value=state.sub;document.getElementById('measVal').textContent=state.measures;
   document.getElementById('loopChk').checked=state.loop;document.getElementById('metChk').checked=state.met;
-  document.getElementById('showBottomChk').checked=state.showBottom!==false;}
+  document.getElementById('showBottomChk').checked=state.showBottom!==false;
+  document.getElementById('artistInput').value=state.artist||'';}
 function pruneGrid(){const steps=totalSteps(),voices=orderOf();
   Object.keys(state.grid).forEach(k=>{if(+k>=steps){delete state.grid[k];return;}
     Object.keys(state.grid[k]).forEach(v=>{if(!voices.includes(v))delete state.grid[k][v];});
     if(!Object.keys(state.grid[k]).length)delete state.grid[k];});}
-function renderAll(){renderPan();renderGrid();renderFieldEditor();}
+function renderMarksEditor(){
+  const wrap=document.getElementById('marksEditor');if(!wrap)return;
+  let h='';
+  for(let m=0;m<state.measures;m++){const k=state.marks[m]||{};
+    h+=`<div class="mark-row"><span class="mlab">Measure ${m+1}</span>`+
+      `<input class="mpart" data-m="${m}" data-f="part" placeholder="Part" value="${escapeAttr(k.part||'')}"/>`+
+      `<input class="msec" data-m="${m}" data-f="section" placeholder="Section" value="${escapeAttr(k.section||'')}"/>`+
+      `<input class="mtempo" data-m="${m}" data-f="tempo" placeholder="bpm" value="${k.tempo||''}"/>`+
+      `<input class="mexpr" data-m="${m}" data-f="expr" placeholder="rall." value="${escapeAttr(k.expr||'')}"/></div>`;
+  }
+  wrap.innerHTML=h;
+  wrap.querySelectorAll('input[data-m]').forEach(inp=>inp.addEventListener('input',e=>{
+    const m=+e.target.dataset.m,f=e.target.dataset.f,val=e.target.value;
+    const mk=state.marks[m]||(state.marks[m]={});
+    if(f==='tempo'){if(val)mk.tempo=+val;else delete mk.tempo;}else{if(val)mk[f]=val;else delete mk[f];}
+    if(!Object.keys(mk).length)delete state.marks[m];
+  }));
+}
+document.getElementById('artistInput').addEventListener('input',e=>{state.artist=e.target.value;});
+function renderAll(){renderPan();renderGrid();renderFieldEditor();renderMarksEditor();
+  const ai=document.getElementById('artistInput');if(ai)ai.value=state.artist||'';}
 
 document.getElementById('playBtn').addEventListener('click',()=>{playing?stop():play();});
 document.getElementById('tempo').addEventListener('input',e=>{state.tempo=+e.target.value;document.getElementById('tempoVal').textContent=state.tempo;});
@@ -552,8 +584,8 @@ document.getElementById('metChk').addEventListener('change',e=>state.met=e.targe
 document.getElementById('showBottomChk').addEventListener('change',e=>{state.showBottom=e.target.checked;renderPan();});
 document.getElementById('beats').addEventListener('change',e=>{state.beats=+e.target.value;pruneGrid();renderGrid();});
 document.getElementById('sub').addEventListener('change',e=>{state.sub=+e.target.value;pruneGrid();renderGrid();});
-document.getElementById('measPlus').addEventListener('click',()=>{if(state.measures<16){state.measures++;document.getElementById('measVal').textContent=state.measures;renderGrid();}});
-document.getElementById('measMinus').addEventListener('click',()=>{if(state.measures>1){state.measures--;pruneGrid();document.getElementById('measVal').textContent=state.measures;renderGrid();}});
+document.getElementById('measPlus').addEventListener('click',()=>{if(state.measures<16){state.measures++;document.getElementById('measVal').textContent=state.measures;renderGrid();renderMarksEditor();}});
+document.getElementById('measMinus').addEventListener('click',()=>{if(state.measures>1){state.measures--;pruneGrid();document.getElementById('measVal').textContent=state.measures;renderGrid();renderMarksEditor();}});
 document.getElementById('clearBtn').addEventListener('click',()=>{state.grid={};renderGrid();});
 document.getElementById('newBtn').addEventListener('click',()=>{state.grid={};document.getElementById('patName').value='';renderGrid();toast('Blank pattern');});
 document.getElementById('saveBtn').addEventListener('click',savePattern);

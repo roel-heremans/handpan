@@ -139,9 +139,9 @@
 .perform-pan-wrap{display:flex;justify-content:center;align-items:center;flex:0 0 auto;padding:6px}
 svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
 .perform-stage{position:relative;flex:0 0 auto;height:184px;overflow:hidden;margin-top:14px}
-.perform-strip{position:absolute;top:14px;left:0;will-change:transform}
+.perform-strip{position:absolute;top:4px;left:0;will-change:transform}
 .perform-strip svg{background:#fff;border-radius:8px}
-.perform-playhead{position:absolute;top:14px;bottom:14px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
+.perform-playhead{position:absolute;top:8px;bottom:8px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
 </style>
 
 <div class="wrap">
@@ -495,11 +495,15 @@ function renderPerformStrip(){
   let body='';
   (lay.rows[0]?lay.rows[0].measures:[]).forEach(meas=>{body+=measureSVG(meas,oy);});
   const H=oy+SCORE.staffH+40;
-  host.innerHTML=`<svg width="${contentW}" height="${H}" viewBox="0 0 ${contentW} ${H}">${body}</svg>`;
+  // Scale the strip up (~2.5x) sized to the viewport height so it stays tall on any screen.
+  const K=Math.max(1.8, Math.min((window.innerHeight||760)*0.42, 460)/H);
+  host.innerHTML=`<svg width="${(contentW*K).toFixed(1)}" height="${(H*K).toFixed(1)}" viewBox="0 0 ${contentW} ${H}">${body}</svg>`;
   host.style.transform='translateX('+perform.playheadX+'px)';   // start with position 0 at the playhead
-  perform.stripW=contentW;
+  const stage=document.getElementById('performStage'); if(stage)stage.style.height=Math.round(H*K+8)+'px';
   perform.spm=model.beats*model.sub;
-  perform.stepW=MEASURE_W/perform.spm;
+  perform.stepW=(MEASURE_W/perform.spm)*K;                      // scaled px per step within a measure
+  perform.stride=(MEASURE_W+SCORE.measGap)*K;                   // scaled px per whole measure
+  perform.stripW=contentW*K;
 }
 function performPos(){                       // fractional step position from the audio clock
   if(!ctx)return 0;
@@ -512,11 +516,10 @@ function performTick(){
   if(!perform.active){perform.raf=0;return;}
   const host=document.getElementById('performStrip');
   if(host){
-    // Map fractional step -> x. layoutScore places measure m at x = m*(measureW+measGap),
-    // so advance by (measureW+measGap) per whole measure and by stepW within a measure —
-    // otherwise the playhead drifts by measGap per measure crossed.
-    const pos=performPos(), gap=SCORE.measGap, mi=Math.floor(pos/perform.spm), inM=pos-mi*perform.spm;
-    const x=mi*(perform.measureW+gap)+inM*perform.stepW;
+    // Map fractional step -> x (in scaled px). Advance by perform.stride per whole measure
+    // and perform.stepW within a measure — matching layoutScore's x = m*(measureW+measGap).
+    const pos=performPos(), mi=Math.floor(pos/perform.spm), inM=pos-mi*perform.spm;
+    const x=mi*perform.stride+inM*perform.stepW;
     host.style.transform='translateX('+(perform.playheadX - x)+'px)';}
   perform.raf=requestAnimationFrame(performTick);
 }

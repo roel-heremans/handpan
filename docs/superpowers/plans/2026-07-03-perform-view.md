@@ -367,7 +367,12 @@ function performPos(){                       // fractional step position from th
 function performTick(){
   if(!perform.active){perform.raf=0;return;}
   const host=document.getElementById('performStrip');
-  if(host){const x=performPos()*perform.stepW;
+  if(host){
+    // Map fractional step -> x. layoutScore places measure m at x = m*(measureW+measGap),
+    // so advance by (measureW+measGap) per whole measure and by stepW within a measure —
+    // otherwise the playhead drifts by measGap per measure crossed.
+    const pos=performPos(), gap=SCORE.measGap, mi=Math.floor(pos/perform.spm), inM=pos-mi*perform.spm;
+    const x=mi*(perform.measureW+gap)+inM*perform.stepW;
     host.style.transform='translateX('+(perform.playheadX - x)+'px)';}
   perform.raf=requestAnimationFrame(performTick);
 }

@@ -483,7 +483,22 @@ function renderPerformPan(){
   const svg=document.getElementById('performPan'); if(!svg)return;
   svg.innerHTML=panInnerSVG();
 }
-function renderPerformStrip(){}               // Task 4 fills this
+function renderPerformStrip(){
+  const host=document.getElementById('performStrip'); if(!host)return;
+  const model=buildScoreModel(state);
+  const per=Math.max(1,state.measures), MEASURE_W=perform.measureW;
+  const contentW=per*MEASURE_W+(per-1)*SCORE.measGap;
+  const lay=layoutScore(model, contentW, per);
+  const oy=perform.oy;
+  let body='';
+  (lay.rows[0]?lay.rows[0].measures:[]).forEach(meas=>{body+=measureSVG(meas,oy);});
+  const H=oy+SCORE.staffH+40;
+  host.innerHTML=`<svg width="${contentW}" height="${H}" viewBox="0 0 ${contentW} ${H}">${body}</svg>`;
+  host.style.transform='translateX('+perform.playheadX+'px)';   // start with position 0 at the playhead
+  perform.stripW=contentW;
+  perform.spm=model.beats*model.sub;
+  perform.stepW=MEASURE_W/perform.spm;
+}
 function startPerformLoop(){}                 // Task 5 fills this
 function stopPerformLoop(){}                  // Task 5 fills this
 function enterPerform(){

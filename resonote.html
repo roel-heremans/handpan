@@ -8,24 +8,24 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --steel-0:#14171a; --steel-1:#1c2024; --steel-2:#252b30; --steel-3:#2f363c;
-    --line:#39424a; --line-soft:#2b3238; --text:#ece6da; --muted:#94a0a7;
-    --bronze:#d9a441; --bronze-line:rgba(217,164,65,.45); --ding:#e8c65c;
-    --teal:#59b3a4; --teal-dim:rgba(89,179,164,.18); --danger:#c96a5a;
-    --hand-left:#40b25c;  --hand-left-dim:rgba(64,178,92,.16);
-    --hand-right:#0d0f12; --hand-ring:rgba(232,232,236,.5);
+    --steel-0:#ffffff; --steel-1:#f7f8fa; --steel-2:#eef1f5; --steel-3:#e3e8ee;
+    --line:#c8d0da; --line-soft:#dde3ea; --text:#1c2430; --muted:#6b7684;
+    --bronze:#E8971E; --bronze-line:rgba(232,151,30,.5); --ding:#b9832a;
+    --teal:#3a6ea5; --teal-dim:rgba(58,110,165,.12); --danger:#c0453a;
+    --hand-left:#4A80C0;  --hand-left-dim:rgba(74,128,192,.16);
+    --hand-right:#E8971E; --hand-ring:rgba(232,151,30,.55);
+    --pan-fill:#c3ccda; --pan-pod:#ffffff; --pan-note:#3a5a80; --pan-num:#8a97a5;
     --radius:12px; --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   }
   *{box-sizing:border-box} html,body{margin:0}
-  body{background:radial-gradient(1200px 600px at 50% -10%, #20262b 0%, var(--steel-0) 55%) fixed;
+  body{background:radial-gradient(1200px 600px at 50% -10%, #ffffff 0%, #eef1f5 60%) fixed;
     color:var(--text); font-family:var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased; padding:clamp(14px,3vw,32px);}
   .wrap{max-width:1080px;margin:0 auto}
   header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 18px;margin-bottom:22px}
   .brand{display:flex;flex-direction:column;gap:2px}
   .eyebrow{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);font-weight:600}
-  h1{font-size:clamp(28px,5vw,42px);margin:0;font-weight:650;letter-spacing:-.02em;
-     background:linear-gradient(180deg,#fff,#c9beab);-webkit-background-clip:text;background-clip:text;color:transparent}
+  h1{font-size:clamp(28px,5vw,42px);margin:0;font-weight:650;letter-spacing:-.02em;color:var(--text)}
   .tagline{color:var(--muted);font-size:14px;margin-left:auto;max-width:34ch;text-align:right}
   .panel{background:var(--steel-1);border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px;margin-bottom:18px}
   .panel h2{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600}

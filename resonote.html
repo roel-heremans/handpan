@@ -599,7 +599,7 @@ function buildScoreModel(st){
     }
     cells.push(arr);
   }
-  return {title:(sheetName()), artist:st.artist||"", scale:st.instrument.name||"Custom",
+  return {title:(st.title!=null?st.title:((typeof document!=='undefined'&&document.getElementById('patName'))?sheetName():'Untitled pattern')), artist:st.artist||"", scale:st.instrument.name||"Custom",
     tempo:st.tempo, beats:st.beats, sub:st.sub, measures:st.measures,
     marks:st.marks||{}, cells};
 }

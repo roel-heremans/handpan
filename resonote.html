@@ -460,7 +460,7 @@ function renderReadout(){
 }
 
 /* ===== PLAYBACK ===== */
-let playing=false,curStep=0,nextTime=0,timer=null;
+let playing=false,curStep=0,nextTime=0,timer=null,playAnchor=0;
 const LOOKAHEAD=25,AHEAD=.12,stepDur=()=>(60/state.tempo)/state.sub;
 function scheduleStep(step,t){
   const st=state.grid[step]||{};Object.keys(st).forEach(v=>playVoice(v,t,st[v]));
@@ -473,6 +473,7 @@ function scheduleStep(step,t){
 function scheduler(){while(nextTime<ctx.currentTime+AHEAD){scheduleStep(curStep,nextTime);nextTime+=stepDur();curStep++;
     if(curStep>=totalSteps()){if(state.loop)curStep=0;else break;}}timer=setTimeout(scheduler,LOOKAHEAD);}
 function play(){resumeAudio();if(playing)return;playing=true;curStep=0;nextTime=ctx.currentTime+.06;
+  playAnchor=nextTime;
   const btn=document.getElementById('playBtn');btn.textContent='■ Stop';btn.classList.remove('primary');btn.classList.add('playing');scheduler();
   if(!state.loop)setTimeout(()=>{if(playing&&!state.loop)stop();},totalSteps()*stepDur()*1000+400);}
 function stop(){playing=false;clearTimeout(timer);document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
@@ -499,8 +500,27 @@ function renderPerformStrip(){
   perform.spm=model.beats*model.sub;
   perform.stepW=MEASURE_W/perform.spm;
 }
-function startPerformLoop(){}                 // Task 5 fills this
-function stopPerformLoop(){}                  // Task 5 fills this
+function performPos(){                       // fractional step position from the audio clock
+  if(!ctx)return 0;
+  let pos=(ctx.currentTime-playAnchor)/stepDur();
+  if(pos<0)pos=0;
+  const tot=totalSteps()||1;
+  return state.loop?(pos%tot):Math.min(pos,tot);
+}
+function performTick(){
+  if(!perform.active){perform.raf=0;return;}
+  const host=document.getElementById('performStrip');
+  if(host){
+    // Map fractional step -> x. layoutScore places measure m at x = m*(measureW+measGap),
+    // so advance by (measureW+measGap) per whole measure and by stepW within a measure —
+    // otherwise the playhead drifts by measGap per measure crossed.
+    const pos=performPos(), gap=SCORE.measGap, mi=Math.floor(pos/perform.spm), inM=pos-mi*perform.spm;
+    const x=mi*(perform.measureW+gap)+inM*perform.stepW;
+    host.style.transform='translateX('+(perform.playheadX - x)+'px)';}
+  perform.raf=requestAnimationFrame(performTick);
+}
+function startPerformLoop(){if(!perform.raf)perform.raf=requestAnimationFrame(performTick);}
+function stopPerformLoop(){if(perform.raf){cancelAnimationFrame(perform.raf);perform.raf=0;}}
 function enterPerform(){
   if(perform.active)return;
   renderPerformPan(); renderPerformStrip();

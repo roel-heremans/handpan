@@ -472,10 +472,10 @@ function scheduleStep(step,t){
 }
 function scheduler(){while(nextTime<ctx.currentTime+AHEAD){scheduleStep(curStep,nextTime);nextTime+=stepDur();curStep++;
     if(curStep>=totalSteps()){if(state.loop)curStep=0;else break;}}timer=setTimeout(scheduler,LOOKAHEAD);}
-function play(){resumeAudio();if(playing)return;playing=true;curStep=0;nextTime=ctx.currentTime+.06;
-  playAnchor=nextTime;
+function play(fromStep){resumeAudio();if(playing)return;playing=true;curStep=(fromStep|0);nextTime=ctx.currentTime+.06;
+  playAnchor=nextTime-curStep*stepDur();
   const btn=document.getElementById('playBtn');btn.textContent='■ Stop';btn.classList.remove('primary');btn.classList.add('playing');scheduler();
-  if(!state.loop)endTimer=setTimeout(()=>{if(playing&&!state.loop)stop();},totalSteps()*stepDur()*1000+400);}
+  if(!state.loop)endTimer=setTimeout(()=>{if(playing&&!state.loop)stop();},(totalSteps()-curStep)*stepDur()*1000+400);}
 function stop(){playing=false;clearTimeout(timer);clearTimeout(endTimer);stopPerformLoop();document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');
   const pb=document.getElementById('performPlay');if(pb)pb.textContent='▶ Play';}

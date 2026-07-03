@@ -131,6 +131,17 @@
     .print-sheet{box-shadow:none;border-radius:0;max-width:none;margin:0;padding:0 6px}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
+.perform-overlay{position:fixed;inset:0;background:#1b1f26;z-index:120;display:flex;flex-direction:column;overflow:hidden}
+.perform-bar{display:flex;align-items:center;gap:14px;justify-content:flex-end;padding:12px 18px}
+.perform-bar .btn{background:#2a303a;border-color:#3a424e;color:#eef1f5}
+.perform-bar .btn:hover{background:#333b47}
+.perform-tempo{margin-right:auto;color:#aab4c2;font-family:var(--mono);font-size:14px}
+.perform-pan-wrap{display:flex;justify-content:center;align-items:center;flex:0 0 auto;padding:6px}
+svg.perform-pan{width:min(38vh,340px);height:min(38vh,340px)}
+.perform-stage{position:relative;flex:1 1 auto;overflow:hidden;margin-top:8px}
+.perform-strip{position:absolute;top:0;left:0;will-change:transform}
+.perform-strip svg{background:#fff;border-radius:8px}
+.perform-playhead{position:absolute;top:8px;bottom:24px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
 </style>
 
 <div class="wrap">
@@ -173,6 +184,7 @@
         <h2>Pattern</h2>
         <div class="transport">
           <button class="btn primary" id="playBtn">▶ Play</button>
+          <button class="btn" id="performBtn">⤢ Perform</button>
           <div class="ctl"><input type="range" id="tempo" min="40" max="180" value="90" /><span class="tempo-val"><span id="tempoVal">90</span> bpm</span></div>
           <label class="toggle"><input type="checkbox" id="loopChk" checked /> Loop</label>
           <label class="toggle"><input type="checkbox" id="metChk" /> Metronome</label>
@@ -251,6 +263,19 @@
     <button class="btn ghost" id="closePrint">Close preview</button>
   </div>
   <div class="print-sheet" id="printSheet"></div>
+</div>
+
+<div class="perform-overlay" id="performOverlay" style="display:none">
+  <div class="perform-bar">
+    <button class="btn" id="performPlay">■ Stop</button>
+    <span class="perform-tempo" id="performTempo"></span>
+    <button class="btn" id="performExit">✕ Exit</button>
+  </div>
+  <div class="perform-pan-wrap"><svg class="perform-pan" id="performPan" viewBox="0 0 300 300"></svg></div>
+  <div class="perform-stage" id="performStage">
+    <div class="perform-playhead" id="performPlayhead"></div>
+    <div class="perform-strip" id="performStrip"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -448,6 +473,30 @@ function play(){resumeAudio();if(playing)return;playing=true;curStep=0;nextTime=
 function stop(){playing=false;clearTimeout(timer);document.querySelectorAll('col.playcol').forEach(c=>c.classList.remove('playcol'));
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');}
 
+let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0};
+function renderPerformPan(){}                 // Task 3 fills this
+function renderPerformStrip(){}               // Task 4 fills this
+function startPerformLoop(){}                 // Task 5 fills this
+function stopPerformLoop(){}                  // Task 5 fills this
+function enterPerform(){
+  if(perform.active)return;
+  renderPerformPan(); renderPerformStrip();
+  document.getElementById('performTempo').textContent=state.tempo+' bpm';
+  document.getElementById('performOverlay').style.display='flex';
+  perform.active=true;
+  const stage=document.getElementById('performStage');
+  perform.playheadX=Math.round(stage.clientWidth*0.30);
+  document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
+  if(!playing)play();
+  startPerformLoop();
+  document.getElementById('performPlay').textContent='■ Stop';
+}
+function exitPerform(){
+  if(!perform.active)return;
+  stopPerformLoop(); stop(); perform.active=false;
+  document.getElementById('performOverlay').style.display='none';
+}
+
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}
 function renderFieldEditor(){
@@ -587,6 +636,7 @@ document.getElementById('addField').addEventListener('click',()=>{if(state.instr
 document.getElementById('removeField').addEventListener('click',()=>{if(state.instrument.fields.length>3){state.instrument.fields.pop();pruneGrid();refreshInstrument(true);}});
 document.querySelectorAll('#percPads .ppad').forEach(pad=>pad.addEventListener('click',()=>{resumeAudio();playVoice(pad.dataset.voice,null,null);}));
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&perform.active){exitPerform();return;}
   if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
   if(e.key===' '){e.preventDefault();playing?stop():play();return;}
   const k=e.key.toLowerCase();
@@ -804,6 +854,12 @@ document.getElementById('doPrint').addEventListener('click',savePDF);
 document.getElementById('doBrowserPrint').addEventListener('click',()=>{try{window.print();}catch(e){downloadPrintHTML();}});
 document.getElementById('closePrint').addEventListener('click',()=>{document.getElementById('printOverlay').style.display='none';});
 window.addEventListener('beforeprint',renderPrintSheet);
+document.getElementById('performBtn').addEventListener('click',()=>{resumeAudio();enterPerform();});
+document.getElementById('performExit').addEventListener('click',exitPerform);
+document.getElementById('performPlay').addEventListener('click',()=>{
+  if(playing){stop();document.getElementById('performPlay').textContent='▶ Play';}
+  else{play();startPerformLoop();document.getElementById('performPlay').textContent='■ Stop';}
+});
 
 /* ===== SAMPLER (record / upload your pan) ===== */
 function sampLabel(v){return v==='D'?'D':(isPerc(v)?PERC.find(p=>p.id===v).label:v);}

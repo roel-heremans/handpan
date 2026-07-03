@@ -578,6 +578,55 @@ function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'
 function escapeAttr(s){return escapeHtml(s);}
 let toastTimer;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900);}
 
+/* ===== SCORE ENGINE (shared by SVG preview + PDF) ===== */
+const SCORE={
+  measGap:14, rowGap:34, measPerRow:5,
+  staffH:44, half:22,            // centerline at +half from staff top
+  barW:1.4, tickTall:16, tickShort:9, tickGray:[150,150,150], ink:[20,20,20],
+  numFont:11, numStep:12,        // vertical stack step for stacked same-hand notes
+  colorR:[232,151,30], colorL:[74,128,192],
+  measNumFont:8, measNumGray:[150,150,150]
+};
+function buildScoreModel(st){
+  const spm=st.beats*st.sub, order=orderOf(), cells=[];
+  for(let m=0;m<st.measures;m++){
+    const arr=[];
+    for(let k=0;k<spm;k++){
+      const s=m*spm+k, g=st.grid[s]||{};
+      const R=order.filter(v=>g[v]==='R').map(printSym);
+      const L=order.filter(v=>g[v]==='L').map(printSym);
+      arr.push({R,L});
+    }
+    cells.push(arr);
+  }
+  return {title:(sheetName()), artist:st.artist||"", scale:st.instrument.name||"Custom",
+    tempo:st.tempo, beats:st.beats, sub:st.sub, measures:st.measures,
+    marks:st.marks||{}, cells};
+}
+function layoutScore(model, contentW){
+  const per=Math.min(SCORE.measPerRow, model.measures)||1;
+  const measW=(contentW-(per-1)*SCORE.measGap)/per;
+  const spm=model.beats*model.sub, colW=measW/spm;
+  const rows=[]; let cur=null;
+  for(let m=0;m<model.measures;m++){
+    if(m%per===0){cur={measures:[],y:0}; rows.push(cur);}
+    const x0=(m%per)*(measW+SCORE.measGap);
+    const ticks=[];
+    for(let k=0;k<spm;k++){ticks.push({x:x0+k*colW, tall:k%model.sub===0});}
+    const numbers=[];
+    model.cells[m].forEach((cell,k)=>{
+      const cx=x0+k*colW+colW/2;
+      cell.R.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half-8-i*SCORE.numStep, sym, role:'R'}));
+      cell.L.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half+8+i*SCORE.numStep, sym, role:'L'}));
+    });
+    const mk=model.marks[m]||{};
+    cur.measures.push({m:m+1, x:x0, w:measW, barX:x0, ticks, numbers,
+      part:mk.part||null, section:mk.section||null, tempo:mk.tempo||null, expr:mk.expr||null});
+  }
+  const footer=`${model.title}${model.artist?' - '+model.artist:''} | ${model.scale}`;
+  return {rows, footer, measW, spm};
+}
+
 /* ===== PRINTABLE SHEET ===== */
 function printSym(v){if(v==='D')return 'D';if(isPerc(v))return PERC.find(p=>p.id===v).label;return v;}
 const SUBNAME={2:'eighths',3:'triplets',4:'sixteenths'};

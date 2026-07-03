@@ -314,6 +314,7 @@ const PRESETS={
 };
 let state={
   instrument:{name:"D Kurd 10+3",ding:"D3",fields:mk(["A3","Bb3","C4","D4","E4","F4","G4","A4","C5"]).concat([b("F3",65,84),b("G3",293,84),b("D5",240,58)])},
+  artist:"", marks:{},
   tempo:90,beats:4,sub:4,measures:1,loop:true,met:false,showBottom:true,grid:{}  // grid[step] = {voiceId:'L'|'R'}
 };
 let samples={}, pendingSamples={}, useSamples=true, selVoice='D';
@@ -479,7 +480,7 @@ async function storageSet(k,v){return kvSet(k,v);}
 async function storageList(){return kvList('pat:');}
 async function storageGet(k){return kvGet(k);}
 async function storageDel(k){return kvDel(k);}
-function snapshot(name){return{name,instrument:JSON.parse(JSON.stringify(state.instrument)),tempo:state.tempo,beats:state.beats,sub:state.sub,measures:state.measures,grid:JSON.parse(JSON.stringify(state.grid)),ts:Date.now(),v:2};}
+function snapshot(name){return{name,artist:state.artist||"",instrument:JSON.parse(JSON.stringify(state.instrument)),tempo:state.tempo,beats:state.beats,sub:state.sub,measures:state.measures,marks:JSON.parse(JSON.stringify(state.marks||{})),grid:JSON.parse(JSON.stringify(state.grid)),ts:Date.now(),v:3};}
 async function savePattern(){const name=(document.getElementById('patName').value||'').trim();
   if(!name){toast('Name your pattern first');document.getElementById('patName').focus();return;}
   await storageSet('pat:'+name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Date.now().toString(36),JSON.stringify(snapshot(name)));
@@ -500,6 +501,8 @@ async function refreshLibrary(){
 function loadPattern(p){stop();
   state.instrument=JSON.parse(JSON.stringify(p.instrument));
   state.instrument.fields=state.instrument.fields.map(f=>typeof f==='string'?{note:f,bottom:false}:f);
+  state.artist=p.artist||"";
+  state.marks=p.marks?JSON.parse(JSON.stringify(p.marks)):{};
   state.tempo=p.tempo;state.beats=p.beats;state.sub=p.sub;state.measures=p.measures;
   const g=JSON.parse(JSON.stringify(p.grid));Object.keys(g).forEach(k=>{if(Array.isArray(g[k])){const o={};g[k].forEach(v=>o[v]='R');g[k]=o;}});
   state.grid=g;syncControls();renderAll();toast('Loaded "'+p.name+'"');}

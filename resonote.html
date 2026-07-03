@@ -133,6 +133,7 @@
   }
 .perform-overlay{position:fixed;inset:0;background:#1b1f26;z-index:120;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
 .perform-bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;justify-content:flex-end;padding:12px 18px}
+.perform-count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:min(28vh,240px);font-weight:700;color:rgba(232,151,30,.92);z-index:5;pointer-events:none}
 .perform-bar .btn{background:#2a303a;border-color:#3a424e;color:#eef1f5}
 .perform-bar .btn:hover{background:#333b47}
 .perform-tempo{margin-right:auto;color:#aab4c2;font-family:var(--mono);font-size:14px}
@@ -189,6 +190,7 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
         <div class="transport">
           <button class="btn primary" id="playBtn">▶ Play</button>
           <button class="btn" id="performBtn">⤢ Perform</button>
+          <label class="toggle" style="gap:4px">Count-in <input type="number" id="countIn" min="0" max="9" value="3" style="width:44px;background:var(--steel-2);border:1px solid var(--line);border-radius:7px;padding:5px 6px;color:var(--text)"/> s</label>
           <div class="ctl"><input type="range" id="tempo" min="40" max="180" value="90" /><span class="tempo-val"><span id="tempoVal">90</span> bpm</span></div>
           <label class="toggle"><input type="checkbox" id="loopChk" checked /> Loop</label>
           <label class="toggle"><input type="checkbox" id="metChk" /> Metronome</label>
@@ -282,6 +284,7 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
     <span class="perform-tempo" id="performTempo"></span>
     <button class="btn" id="performExit">✕ Exit</button>
   </div>
+  <div class="perform-count" id="performCount"></div>
   <div class="perform-pan-wrap"><svg class="perform-pan" id="performPan" viewBox="0 0 300 300"></svg></div>
   <div class="perform-stage" id="performStage">
     <div class="perform-playhead" id="performPlayhead"></div>
@@ -549,9 +552,21 @@ function enterPerform(){
   perform.playheadX=Math.round(stage.clientWidth*0.30);
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
   renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right
-  stop(); play();                                // clean start from the top (clears any stale end-timer)
-  startPerformLoop();
+  performMoveStrip(0);
+  const n=Math.max(0,Math.min(9,parseInt((document.getElementById('countIn')||{}).value||'0',10)||0));
+  perform.countIn=n;
+  if(n>0)runCountIn(n,startPerformPlayback); else startPerformPlayback();
+}
+function startPerformPlayback(){
+  stop(); play(); startPerformLoop();
   document.getElementById('performPlay').textContent='⏸ Pause';
+}
+function runCountIn(n,done){
+  const el=document.getElementById('performCount'); let k=n;
+  const tick=()=>{ if(!perform.active)return;
+    if(k<=0){el.style.display='none';el.textContent='';done();return;}
+    el.style.display='flex'; el.textContent=k; k--; perform.countTimer=setTimeout(tick,1000); };
+  tick();
 }
 function setPerformSpeed(mult){
   const p=performPos();
@@ -567,6 +582,7 @@ function exitPerform(){
   if(perform.baseTempo){state.tempo=perform.baseTempo;
     const t=document.getElementById('tempo'),tv=document.getElementById('tempoVal');
     if(t)t.value=state.tempo; if(tv)tv.textContent=state.tempo;}
+  const c=document.getElementById('performCount');if(c){c.style.display='none';c.textContent='';}
   document.getElementById('performOverlay').style.display='none';
 }
 // Toggle playback from inside the performance view; keeps the scroll loop and button label in sync.

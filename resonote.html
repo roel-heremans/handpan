@@ -367,8 +367,8 @@ function playVoice(v,t,hand){
 }
 
 /* ===== PAN ===== */
-function renderPan(){
-  const svg=document.getElementById('pan'),cx=150,cy=140,R=92,tops=[],bots=[];
+function panInnerSVG(){
+  const cx=150,cy=140,R=92,tops=[],bots=[];
   state.instrument.fields.forEach((f,i)=>{(f.bottom?bots:tops).push({note:f.note,num:i+1,ang:f.ang,rad:f.rad});});
   let h=`<circle cx="${cx}" cy="${cy}" r="128" fill="var(--pan-fill)" stroke="#aab4c2" stroke-width="1.5"/><circle cx="${cx}" cy="${cy}" r="116" fill="none" stroke="#b4bdca" stroke-width="1"/>`;
   // Zigzag handpan layout: 1 at the bottom, then alternating up the sides
@@ -401,11 +401,16 @@ function renderPan(){
         <text class="pan-note-name" x="${x.toFixed(1)}" y="${(y+23).toFixed(1)}" text-anchor="middle" fill="var(--teal)" opacity="0.8">${f.note}</text></g>`;
     });
   }
-  svg.innerHTML=h;
+  return h;
+}
+function renderPan(){
+  const svg=document.getElementById('pan');
+  svg.innerHTML=panInnerSVG();
   svg.querySelectorAll('[data-voice]').forEach(el=>el.addEventListener('click',()=>{resumeAudio();const v=el.dataset.voice;playVoice(v,null,null);litPan(v);}));
   document.getElementById('instrName').innerHTML=`<b>${escapeHtml(state.instrument.name||'Custom')}</b> · ${meloVoices().length} notes`;
 }
-function litPan(v,hand){const el=document.querySelector(`#pan [data-voice="${v}"]`);if(!el)return;const c=hand==='L'?'lit-L':'lit';el.classList.add(c);setTimeout(()=>el.classList.remove(c),260);}
+function litPan(v,hand){const c=hand==='L'?'lit-L':'lit';
+  document.querySelectorAll(`[data-voice="${v}"]`).forEach(el=>{el.classList.add(c);setTimeout(()=>el.classList.remove(c),260);});}
 
 /* ===== GRID ===== */
 function cellClass(hand){return hand?'on-'+hand:'';}
@@ -474,7 +479,10 @@ function stop(){playing=false;clearTimeout(timer);document.querySelectorAll('col
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');}
 
 let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, oy:70, playheadX:0};
-function renderPerformPan(){}                 // Task 3 fills this
+function renderPerformPan(){
+  const svg=document.getElementById('performPan'); if(!svg)return;
+  svg.innerHTML=panInnerSVG();
+}
 function renderPerformStrip(){}               // Task 4 fills this
 function startPerformLoop(){}                 // Task 5 fills this
 function stopPerformLoop(){}                  // Task 5 fills this

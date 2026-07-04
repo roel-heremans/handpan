@@ -551,7 +551,7 @@ function enterPerform(){
   perform.baseTempo=state.tempo;
   document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.classList.toggle('sel',+b.dataset.mult===1));
   const stage=document.getElementById('performStage');
-  perform.measureW=Math.max(200,Math.round(stage.clientWidth/3));   // ~3 measures span the stage
+  perform.measureW=Math.max(200,Math.round(stage.clientWidth/2));   // current measure centered, ~half a measure each side
   perform.playheadX=Math.round(stage.clientWidth*0.5);              // centered playhead
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
   renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right

@@ -558,11 +558,15 @@ function enterPerform(){
   performMoveStrip(0);
   const n=Math.max(0,Math.min(9,parseInt((document.getElementById('countIn')||{}).value||'0',10)||0));
   perform.countIn=n;
-  if(n>0)runCountIn(n,startPerformPlayback); else startPerformPlayback();
+  countInThenPlay(0);
 }
-function startPerformPlayback(){
-  stop(); play(); startPerformLoop();
-  document.getElementById('performPlay').textContent='⏸ Pause';
+// Move to `step`, run the count-in (if any), then start playback from there.
+// Used both on entering the view and on rewinding to a previous measure.
+function countInThenPlay(step){
+  if(perform.countTimer){clearTimeout(perform.countTimer);perform.countTimer=null;}
+  stop(); performMoveStrip(step);
+  const go=()=>{play(step);startPerformLoop();document.getElementById('performPlay').textContent='⏸ Pause';};
+  if(perform.countIn>0)runCountIn(perform.countIn,go); else go();
 }
 function runCountIn(n,done){
   const el=document.getElementById('performCount'); let k=n;
@@ -596,13 +600,10 @@ function togglePerformPlayback(){if(perform.countTimer)return;if(playing)perform
 function performMoveStrip(step){const host=document.getElementById('performStrip');if(!host)return;
   const spm=perform.spm||1,mi=Math.floor(step/spm),inM=step-mi*spm;
   const x=mi*perform.stride+inM*perform.stepW;host.style.transform='translateX('+(perform.playheadX-x)+'px)';}
-function performSeek(step){const was=playing;stop();
-  if(was){play(step);startPerformLoop();document.getElementById('performPlay').textContent='⏸ Pause';}
-  else{perform.pausedStep=step;performMoveStrip(step);}}
 function performRewind(){const spm=state.beats*state.sub;
   const pos=playing?performPos():(perform.pausedStep||0);       // when paused, the clock keeps advancing — use the frozen step
   const m=Math.floor(pos/spm);
-  const target=Math.max(0,m-1)*spm;performSeek(target);}
+  const target=Math.max(0,m-1)*spm;countInThenPlay(target);}   // count back in, then play from the previous measure
 
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}

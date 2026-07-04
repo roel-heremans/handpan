@@ -594,16 +594,21 @@ function exitPerform(){
 }
 // Toggle playback from inside the performance view; keeps the scroll loop and button label in sync.
 function performPause(){if(!playing)return;perform.pausedStep=Math.round(performPos());stop();}
-function performResume(){play(perform.pausedStep||0);startPerformLoop();perform.pausedStep=null;
-  const b=document.getElementById('performPlay');if(b)b.textContent='⏸ Pause';}
+function performResume(){countInThenPlay(perform.pausedStep!=null?perform.pausedStep:0);}  // Play from paused → count-in, then play
 function togglePerformPlayback(){if(perform.countTimer)return;if(playing)performPause();else performResume();}
 function performMoveStrip(step){const host=document.getElementById('performStrip');if(!host)return;
   const spm=perform.spm||1,mi=Math.floor(step/spm),inM=step-mi*spm;
   const x=mi*perform.stride+inM*perform.stepW;host.style.transform='translateX('+(perform.playheadX-x)+'px)';}
+// ◀ steps back one measure per press and WAITS (paused). Press it multiple times to go
+// back several measures; the count-in fires when you press Play (performResume), not here.
 function performRewind(){const spm=state.beats*state.sub;
-  const pos=playing?performPos():(perform.pausedStep||0);       // when paused, the clock keeps advancing — use the frozen step
+  const pos=playing?performPos():(perform.pausedStep!=null?perform.pausedStep:0);
   const m=Math.floor(pos/spm);
-  const target=Math.max(0,m-1)*spm;countInThenPlay(target);}   // count back in, then play from the previous measure
+  const target=Math.max(0,m-1)*spm;
+  if(perform.countTimer){clearTimeout(perform.countTimer);perform.countTimer=null;}   // cancel any running count-in
+  stop();                                          // freeze/pause at the target — no auto count-in or play
+  perform.pausedStep=target; performMoveStrip(target);
+  const c=document.getElementById('performCount');if(c){c.style.display='none';c.textContent='';}}
 
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}

@@ -505,11 +505,11 @@ function renderPerformStrip(){
   const per=Math.max(1,state.measures), MEASURE_W=perform.measureW;
   const contentW=per*MEASURE_W+(per-1)*SCORE.measGap;           // horizontal is natural (unchanged)
   // Enlarge only the VERTICAL metrics + number font for readability during play; x positions are untouched.
-  const save={half:SCORE.half,staffH:SCORE.staffH,tickTall:SCORE.tickTall,tickShort:SCORE.tickShort,numFont:SCORE.numFont,numStep:SCORE.numStep,measNumFont:SCORE.measNumFont,tickGray:SCORE.tickGray,barW:SCORE.barW};
+  const save={half:SCORE.half,staffH:SCORE.staffH,tickTall:SCORE.tickTall,tickShort:SCORE.tickShort,numFont:SCORE.numFont,numStep:SCORE.numStep,measNumFont:SCORE.measNumFont,tickGray:SCORE.tickGray,barW:SCORE.barW,numGap:SCORE.numGap};
   const oy=84;                                                  // top room for the taller staff + bigger stacked numbers
   let body='', H=oy+100+22;
   try{
-    SCORE.half=48;SCORE.staffH=100;SCORE.tickTall=34;SCORE.tickShort=18;SCORE.numFont=26;SCORE.numStep=30;SCORE.measNumFont=13;SCORE.tickGray=[40,40,40];SCORE.barW=3;
+    SCORE.half=48;SCORE.staffH=100;SCORE.tickTall=34;SCORE.tickShort=18;SCORE.numFont=26;SCORE.numStep=30;SCORE.measNumFont=13;SCORE.tickGray=[40,40,40];SCORE.barW=3;SCORE.numGap=22;
     const lay=layoutScore(model, contentW, per);
     (lay.rows[0]?lay.rows[0].measures:[]).forEach(meas=>{body+=measureSVG(meas,oy);});
     H=oy+SCORE.staffH+22;
@@ -762,6 +762,7 @@ const SCORE={
   staffH:44, half:22,            // centerline at +half from staff top
   barW:1.4, tickTall:16, tickShort:9, tickGray:[150,150,150], ink:[20,20,20],
   numFont:12, numStep:13,        // vertical stack step for stacked same-hand notes
+  numGap:8,                      // gap from the centerline to the nearest number's baseline
   colorR:[232,151,30], colorL:[74,128,192],
   measNumFont:8, measNumGray:[150,150,150]
 };
@@ -794,8 +795,8 @@ function layoutScore(model, contentW, perRow){
     const numbers=[];
     model.cells[m].forEach((cell,k)=>{
       const cx=x0+k*colW+colW/2;
-      cell.R.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half-8-i*SCORE.numStep, sym, role:'R'}));
-      cell.L.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half+8+i*SCORE.numStep, sym, role:'L'}));
+      cell.R.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half-SCORE.numGap-i*SCORE.numStep, sym, role:'R'}));
+      cell.L.forEach((sym,i)=>numbers.push({x:cx, y:SCORE.half+SCORE.numGap+i*SCORE.numStep, sym, role:'L'}));
     });
     const mk=model.marks[m]||{};
     cur.measures.push({m:m+1, x:x0, w:measW, barX:x0, ticks, numbers,

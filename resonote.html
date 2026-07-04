@@ -602,7 +602,7 @@ function performSeek(step){const was=playing;stop();
 function performRewind(){const spm=state.beats*state.sub;
   const pos=playing?performPos():(perform.pausedStep||0);       // when paused, the clock keeps advancing — use the frozen step
   const m=Math.floor(pos/spm);
-  const target=((pos-m*spm)<state.sub*0.5?Math.max(0,m-1):m)*spm;performSeek(target);}
+  const target=Math.max(0,m-1)*spm;performSeek(target);}
 
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}

@@ -18,6 +18,8 @@ browser and go.
   - Having sliding option to go back and forth on the displayed notes additionally to  
     the jump back and forward option
   - Saving the entered songs in a database that you can reload and this between systems
+  - Adding the Allan Walker song as the default song to be loaded when first opening the app.
+
 ---
 
 ## Features

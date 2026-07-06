@@ -143,7 +143,8 @@
 .perf-speed.sel{background:#E8971E;border-color:#E8971E;color:#231a08;font-weight:600}
 .perform-pan-wrap{display:flex;justify-content:center;align-items:center;flex:0 0 auto;padding:6px}
 svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
-.perform-stage{position:relative;flex:0 0 auto;height:184px;overflow:hidden;margin-top:14px}
+.perform-stage{position:relative;flex:0 0 auto;height:184px;overflow:hidden;margin-top:14px;touch-action:none;cursor:grab}
+.perform-stage:active{cursor:grabbing}
 .perform-strip{position:absolute;top:4px;left:0;will-change:transform}
 .perform-strip svg{background:#fff;border-radius:8px}
 .perform-playhead{position:absolute;top:8px;bottom:8px;width:2px;background:#E8971E;box-shadow:0 0 8px rgba(232,151,30,.8);z-index:2}
@@ -621,6 +622,35 @@ function performSeekMeasure(delta){const spm=state.beats*state.sub;
 function performRewind(){performSeekMeasure(-1);}
 function performForward(){performSeekMeasure(1);}
 
+// Drag the notation to scrub. A drag pauses playback, follows the finger, and on
+// release snaps to the nearest step (paused, held tone-fields shown). Tap (no drag) does nothing.
+let dragStartX=0,dragStartTX=0,dragPending=false;
+function scrubClampTX(tx){const a=perform.playheadX-stepToX(0),z=perform.playheadX-stepToX(totalSteps()-1);
+  const hi=Math.max(a,z),lo=Math.min(a,z); return tx>hi?hi:(tx<lo?lo:tx);}
+function onScrubDown(e){ if(!perform.active)return;
+  dragPending=true; perform.dragging=false;
+  dragStartX=e.clientX; dragStartTX=perform.tx!=null?perform.tx:perform.playheadX;
+  try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}}
+function onScrubMove(e){
+  if(!dragPending&&!perform.dragging)return;
+  const dx=e.clientX-dragStartX;
+  if(!perform.dragging){ if(Math.abs(dx)<4)return;               // movement threshold: a tap won't scrub
+    perform.dragging=true;
+    if(perform.countTimer){clearTimeout(perform.countTimer);perform.countTimer=null;
+      const c=document.getElementById('performCount');if(c){c.style.display='none';c.textContent='';}}
+    if(playing)stop(); }                                          // pause on real drag
+  const tx=scrubClampTX(dragStartTX+dx);
+  setStripTX(tx);
+  showPausedNotes(Math.round(xToStep(perform.playheadX-tx)));
+  e.preventDefault();
+}
+function onScrubUp(e){ dragPending=false;
+  if(!perform.dragging)return; perform.dragging=false;
+  const step=Math.round(xToStep(perform.playheadX-(perform.tx!=null?perform.tx:perform.playheadX)));
+  perform.pausedStep=step; performMoveStrip(step); showPausedNotes(step);
+  const b=document.getElementById('performPlay');if(b)b.textContent='▶ Play';
+  try{e.currentTarget.releasePointerCapture(e.pointerId);}catch(_){}}
+
 /* ===== INSTRUMENT EDITOR ===== */
 function renderPresetOptions(){document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('');}
 function renderFieldEditor(){
@@ -985,6 +1015,11 @@ document.getElementById('performExit').addEventListener('click',exitPerform);
 document.getElementById('performPlay').addEventListener('click',togglePerformPlayback);
 document.getElementById('performPrev').addEventListener('click',performRewind);
 document.getElementById('performNext').addEventListener('click',performForward);
+(function(){const stg=document.getElementById('performStage');
+  stg.addEventListener('pointerdown',onScrubDown);
+  stg.addEventListener('pointermove',onScrubMove);
+  stg.addEventListener('pointerup',onScrubUp);
+  stg.addEventListener('pointercancel',onScrubUp);})();
 document.querySelectorAll('#performOverlay .perf-speed').forEach(b=>b.addEventListener('click',()=>setPerformSpeed(+b.dataset.mult)));
 
 /* ===== SAMPLER (record / upload your pan) ===== */

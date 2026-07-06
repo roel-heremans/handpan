@@ -141,6 +141,19 @@ function findMeasureForPoint(page, y, x) {
   return chosen;
 }
 
+// Section/tempo/expression labels sit ABOVE their measure's staff (sometimes well
+// above, in the inter-row gap). Attach them to the nearest row whose measure-number
+// label is at or below the mark (the row the mark sits above), then the measure by x.
+function findMeasureForLabelAbove(page, y, x) {
+  const rows = rowsByPage.get(page) || [];
+  let rowY = rows.length ? rows[rows.length - 1] : null;
+  for (const r of rows) { if (r >= y - ROW_EPS) { rowY = r; break; } }
+  const rowMeasures = measuresByPageRow.get(`${page}|${rowY}`) || [];
+  let chosen = rowMeasures[0];
+  for (const m of rowMeasures) { if (m.leftX <= x) chosen = m; else break; }
+  return chosen;
+}
+
 // ---------------------------------------------------------------------------
 // Step 3: assign notes to (measure, step, hand, voice).
 // ---------------------------------------------------------------------------
@@ -192,7 +205,7 @@ for (const part of partWords) {
     w.xMin > part.xMax && w.xMin - part.xMax < 25
   );
   if (!code) continue;
-  const m = findMeasureForPoint(part.page, part.yMin, part.xMin);
+  const m = findMeasureForLabelAbove(part.page, part.yMin, part.xMin);
   if (!m) continue;
   marks[m.idx] = marks[m.idx] || {};
   marks[m.idx].section = `Part ${code.text}`;
@@ -220,7 +233,7 @@ tempoEvents.forEach((ev, i) => {
   if (i === 0) {
     tempo = ev.value;
   } else {
-    const m = findMeasureForPoint(ev.page, ev.yMin, ev.xMin);
+    const m = findMeasureForLabelAbove(ev.page, ev.yMin, ev.xMin);
     if (m) {
       marks[m.idx] = marks[m.idx] || {};
       marks[m.idx].tempo = ev.value;
@@ -231,7 +244,7 @@ tempoEvents.forEach((ev, i) => {
 // Expression: "rall." label -> attach to its measure.
 const rallWords = labelWords.filter(w => w.text === 'rall.');
 for (const w of rallWords) {
-  const m = findMeasureForPoint(w.page, w.yMin, w.xMin);
+  const m = findMeasureForLabelAbove(w.page, w.yMin, w.xMin);
   if (!m) continue;
   marks[m.idx] = marks[m.idx] || {};
   marks[m.idx].expr = 'rall.';

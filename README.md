@@ -7,7 +7,13 @@ D Kurd 10+3, but it works with any scale you configure.
 No build step, no dependencies to install — it's one HTML file. Open it in a
 browser and go.
 
-**Live app:** `resonote.html` (or the repo's GitHub Pages URL once enabled).
+**Run it two ways:**
+
+- **Hosted (recommended, works on iPad):** <https://roel-heremans.github.io/handpan/>
+  — nothing to install; on iOS you can *Share → Add to Home Screen* for an
+  app-like shortcut.
+- **Local:** open `resonote.html` in a desktop browser (note: iOS Safari won't
+  render a local `.html` file — use the hosted link on iPad).
 
 ---
 

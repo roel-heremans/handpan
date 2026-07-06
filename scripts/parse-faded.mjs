@@ -162,14 +162,28 @@ const grid = {};
 const unknown = [];
 let maxRoundingError = 0;
 
+// First pass: raw sub-cell offset of every note from its measure's label. The
+// measure-number label sits a constant fraction of a cell left of the true
+// cell-0 (downbeat) column, so raw = (cx-leftX)/cellWidth carries a systematic
+// sub-cell PHASE (~0.64 for this PDF). Left uncorrected it rounds the downbeat
+// up to step 1 and shifts the whole song one 16th late. Estimate PHASE as the
+// median fractional part across all notes and subtract it so notes land on
+// their true cells (downbeats on 0, 4, 8, 12).
+const placed = [];
 for (const note of noteWords) {
   const m = findMeasureForPoint(note.page, note.yMin, note.cx);
   if (!m) continue;
+  placed.push({ note, m, raw: (note.cx - m.leftX) / cellWidth });
+}
+const fracs = placed.map(p => ((p.raw % 1) + 1) % 1).sort((a, b) => a - b);
+const PHASE = fracs.length ? fracs[Math.floor(fracs.length / 2)] : 0;
 
-  const raw = (note.cx - m.leftX) / cellWidth;
-  const stepRaw = Math.round(raw);
+// Second pass: assign phase-corrected step / hand / voice.
+for (const { note, m, raw } of placed) {
+  const corrected = raw - PHASE;
+  const stepRaw = Math.round(corrected);
   const step = Math.min(15, Math.max(0, stepRaw));
-  maxRoundingError = Math.max(maxRoundingError, Math.abs(raw - stepRaw));
+  maxRoundingError = Math.max(maxRoundingError, Math.abs(corrected - stepRaw));
   const globalStep = m.idx * 16 + step;
 
   const hand = note.cy > (m.rowY + CENTER_OFFSET) ? 'L' : 'R';
@@ -188,6 +202,7 @@ for (const note of noteWords) {
   grid[globalStep] = grid[globalStep] || {};
   grid[globalStep][voice] = hand;
 }
+console.log('phase (sub-cell offset subtracted):', PHASE.toFixed(3));
 
 // ---------------------------------------------------------------------------
 // Step 4: sections, tempo, expression.

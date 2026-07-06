@@ -283,12 +283,11 @@ const instrument = {
     { note: 'D4', bottom: false }, { note: 'E4', bottom: false }, { note: 'F4', bottom: false },
     { note: 'G4', bottom: false }, { note: 'A4', bottom: false }, { note: 'C5', bottom: false },
     // 9 tone fields on top (1-9); 3 on the underside (10-12) in the owner's
-    // Yatao D Kurd 13 numbering: 10 F3, 11 G3, 12 D5. Each keeps the rim spot it
-    // occupies on the pan drawing (F3 left, G3 upper-left, D5 right), so the
-    // numbers land as 10=left, 11=upper-left, 12=right.
-    { note: 'F3', bottom: true, ang: 280, rad: 136 },
-    { note: 'G3', bottom: true, ang: 240, rad: 136 },
-    { note: 'D5', bottom: true, ang: 80, rad: 136 },
+    // Yatao D Kurd 13 numbering: 10 F3, 11 G3, 12 D5. Rim spots per the owner's
+    // pan: 10=right, 11=left, 12=upper-left.
+    { note: 'F3', bottom: true, ang: 80, rad: 136 },
+    { note: 'G3', bottom: true, ang: 280, rad: 136 },
+    { note: 'D5', bottom: true, ang: 240, rad: 136 },
   ],
 };
 

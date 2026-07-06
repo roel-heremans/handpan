@@ -534,11 +534,8 @@ function performTick(){
   if(!perform.active){perform.raf=0;return;}
   const host=document.getElementById('performStrip');
   if(host){
-    // Map fractional step -> x (in scaled px). Advance by perform.stride per whole measure
-    // and perform.stepW within a measure — matching layoutScore's x = m*(measureW+measGap).
-    const pos=performPos(), mi=Math.floor(pos/perform.spm), inM=pos-mi*perform.spm;
-    const x=mi*perform.stride+inM*perform.stepW;
-    host.style.transform='translateX('+(perform.playheadX - x)+'px)';}
+    setStripTX(perform.playheadX-stepToX(performPos()));
+  }
   perform.raf=requestAnimationFrame(performTick);
 }
 function startPerformLoop(){if(!perform.raf)perform.raf=requestAnimationFrame(performTick);}
@@ -598,9 +595,13 @@ function exitPerform(){
 function performPause(){if(!playing)return;perform.pausedStep=Math.round(performPos());stop();showPausedNotes(perform.pausedStep);}
 function performResume(){countInThenPlay(perform.pausedStep!=null?perform.pausedStep:0);}  // Play from paused → count-in, then play
 function togglePerformPlayback(){if(perform.countTimer)return;if(playing)performPause();else performResume();}
-function performMoveStrip(step){const host=document.getElementById('performStrip');if(!host)return;
-  const spm=perform.spm||1,mi=Math.floor(step/spm),inM=step-mi*spm;
-  const x=mi*perform.stride+inM*perform.stepW;host.style.transform='translateX('+(perform.playheadX-x)+'px)';}
+function setStripTX(tx){perform.tx=tx;const h=document.getElementById('performStrip');if(h)h.style.transform='translateX('+tx+'px)';}
+function stepToX(step){const spm=perform.spm||1,mi=Math.floor(step/spm),inM=step-mi*spm;
+  return mi*perform.stride+inM*perform.stepW;}
+function xToStep(x){const spm=perform.spm||1,stride=perform.stride||1,stepW=perform.stepW||1;
+  if(x<0)x=0; const mi=Math.floor(x/stride); let inM=(x-mi*stride)/stepW; if(inM>spm)inM=spm; if(inM<0)inM=0;
+  let step=mi*spm+inM, max=totalSteps()-1; if(step<0)step=0; if(step>max)step=max; return step;}
+function performMoveStrip(step){setStripTX(perform.playheadX-stepToX(step));}
 // Held highlight of the tone fields played at a step, shown on the performance pan while paused.
 function clearHeldPan(){document.querySelectorAll('#performPan .held,#performPan .held-L').forEach(el=>el.classList.remove('held','held-L'));}
 function showPausedNotes(step){clearHeldPan();const st=state.grid[step]||{};

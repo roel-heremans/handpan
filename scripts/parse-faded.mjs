@@ -276,9 +276,9 @@ const instrument = {
     // 9 tone fields on top (1-9); 3 on the underside (10-12), positioned below
     // their top-field neighbours: 10 below 5, 11 below 4, 12 below 6.
     // Ring angles for a 9-field top: 5->80deg, 4->280deg, 6->240deg.
-    { note: 'D5', bottom: true, ang: 80, rad: 120 },
-    { note: 'F3', bottom: true, ang: 280, rad: 120 },
-    { note: 'G3', bottom: true, ang: 240, rad: 120 },
+    { note: 'D5', bottom: true, ang: 80, rad: 136 },
+    { note: 'F3', bottom: true, ang: 280, rad: 136 },
+    { note: 'G3', bottom: true, ang: 240, rad: 136 },
   ],
 };
 

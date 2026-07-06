@@ -280,12 +280,14 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
     <button class="btn" id="performNext" title="Next measure">⏭</button>
     <button class="btn" id="performPlay">⏸ Pause</button>
     <span class="perf-speeds">
+      <button class="perf-speed" data-mult="0.25">0.25×</button>
       <button class="perf-speed" data-mult="0.5">0.5×</button>
       <button class="perf-speed" data-mult="0.75">0.75×</button>
       <button class="perf-speed sel" data-mult="1">1×</button>
       <button class="perf-speed" data-mult="1.25">1.25×</button>
     </span>
     <span class="perform-tempo" id="performTempo"></span>
+    <button class="btn" id="performPanToggle" title="Hide the pan to show a second row of notation">Hide pan</button>
     <button class="btn" id="performExit">✕ Exit</button>
   </div>
   <div class="perform-count" id="performCount"></div>
@@ -293,6 +295,9 @@ svg.perform-pan{width:min(42vh,380px);height:min(42vh,380px)}
   <div class="perform-stage" id="performStage">
     <div class="perform-playhead" id="performPlayhead"></div>
     <div class="perform-strip" id="performStrip"></div>
+  </div>
+  <div class="perform-stage" id="performStage2" style="display:none">
+    <div class="perform-strip" id="performStrip2"></div>
   </div>
 </div>
 
@@ -5603,7 +5608,7 @@ function stop(){playing=false;clearTimeout(timer);clearTimeout(endTimer);stopPer
   const btn=document.getElementById('playBtn');btn.textContent='▶ Play';btn.classList.add('primary');btn.classList.remove('playing');
   const pb=document.getElementById('performPlay');if(pb)pb.textContent='▶ Play';}
 
-let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, playheadX:0, pausedStep:null};
+let perform={active:false, raf:0, stripW:0, measureW:220, spm:16, stepW:0, playheadX:0, pausedStep:null, twoRows:false, rowWidth:0, tx:0};
 function renderPerformPan(){
   const svg=document.getElementById('performPan'); if(!svg)return;
   svg.innerHTML=panInnerSVG();
@@ -5626,6 +5631,10 @@ function renderPerformStrip(){
   host.innerHTML=`<svg width="${contentW}" height="${H}" viewBox="0 0 ${contentW} ${H}">${body}</svg>`;
   host.style.transform='translateX('+perform.playheadX+'px)';   // start with position 0 at the playhead
   const stage=document.getElementById('performStage'); if(stage)stage.style.height=(H+8)+'px';
+  // Second (look-ahead) row: same score, shown one stage-width ahead when the pan is hidden.
+  const host2=document.getElementById('performStrip2'); if(host2)host2.innerHTML=host.innerHTML;
+  const stage2=document.getElementById('performStage2'); if(stage2)stage2.style.height=(H+8)+'px';
+  if(stage)perform.rowWidth=stage.clientWidth;
   perform.spm=model.beats*model.sub;
   perform.stepW=MEASURE_W/perform.spm;                          // natural px per step (horizontal unchanged)
   perform.stride=MEASURE_W+SCORE.measGap;                       // natural px per whole measure
@@ -5662,6 +5671,7 @@ function enterPerform(){
   document.getElementById('performPlayhead').style.left=perform.playheadX+'px';
   renderPerformPan(); renderPerformStrip();      // playheadX is set first, so the strip's initial position is right
   performMoveStrip(0);
+  applyPerformTwoRows();                          // restore the pan-hidden / two-row preference for this session
   const n=Math.max(0,Math.min(9,parseInt((document.getElementById('countIn')||{}).value||'0',10)||0));
   perform.countIn=n;
   countInThenPlay(0);
@@ -5703,7 +5713,18 @@ function exitPerform(){
 function performPause(){if(!playing)return;perform.pausedStep=Math.round(performPos());stop();showPausedNotes(perform.pausedStep);}
 function performResume(){countInThenPlay(perform.pausedStep!=null?perform.pausedStep:0);}  // Play from paused → count-in, then play
 function togglePerformPlayback(){if(perform.countTimer)return;if(playing)performPause();else performResume();}
-function setStripTX(tx){perform.tx=tx;const h=document.getElementById('performStrip');if(h)h.style.transform='translateX('+tx+'px)';}
+function setStripTX(tx){perform.tx=tx;
+  const h=document.getElementById('performStrip');if(h)h.style.transform='translateX('+tx+'px)';
+  const h2=document.getElementById('performStrip2');if(h2)h2.style.transform='translateX('+(tx-perform.rowWidth)+'px)';}   // look-ahead row trails one stage-width behind
+// Hide the pan to free its space for a second (look-ahead) notation row, and back.
+function applyPerformTwoRows(){
+  const on=perform.twoRows;
+  const wrap=document.querySelector('#performOverlay .perform-pan-wrap'); if(wrap)wrap.style.display=on?'none':'';
+  const stage2=document.getElementById('performStage2'); if(stage2)stage2.style.display=on?'block':'none';
+  const btn=document.getElementById('performPanToggle'); if(btn)btn.textContent=on?'Show pan':'Hide pan';
+  setStripTX(perform.tx!=null?perform.tx:perform.playheadX);
+}
+function togglePerformTwoRows(){perform.twoRows=!perform.twoRows;applyPerformTwoRows();}
 function stepToX(step){const spm=perform.spm||1,mi=Math.floor(step/spm),inM=step-mi*spm;
   return mi*perform.stride+inM*perform.stepW;}
 function xToStep(x){const spm=perform.spm||1,stride=perform.stride||1,stepW=perform.stepW||1;
@@ -6135,6 +6156,7 @@ document.getElementById('performExit').addEventListener('click',exitPerform);
 document.getElementById('performPlay').addEventListener('click',togglePerformPlayback);
 document.getElementById('performPrev').addEventListener('click',performRewind);
 document.getElementById('performNext').addEventListener('click',performForward);
+document.getElementById('performPanToggle').addEventListener('click',togglePerformTwoRows);
 (function(){const stg=document.getElementById('performStage');
   stg.addEventListener('pointerdown',onScrubDown);
   stg.addEventListener('pointermove',onScrubMove);

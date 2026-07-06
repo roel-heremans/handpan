@@ -43,15 +43,21 @@
       },
       {
         "note": "D5",
-        "bottom": false
+        "bottom": true,
+        "ang": 80,
+        "rad": 120
       },
       {
         "note": "F3",
-        "bottom": true
+        "bottom": true,
+        "ang": 280,
+        "rad": 120
       },
       {
         "note": "G3",
-        "bottom": true
+        "bottom": true,
+        "ang": 240,
+        "rad": 120
       }
     ]
   },

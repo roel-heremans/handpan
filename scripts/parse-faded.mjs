@@ -178,6 +178,14 @@ for (const note of noteWords) {
 const fracs = placed.map(p => ((p.raw % 1) + 1) % 1).sort((a, b) => a - b);
 const PHASE = fracs.length ? fracs[Math.floor(fracs.length / 2)] : 0;
 
+// The PDF numbers the three underside notes in the PANoramicSounds instrument's
+// order (10=D5, 11=F3, 12=G3). The app models a Yatao D Kurd 13 whose owner
+// numbers them 10=F3, 11=G3, 12=D5. Remap the bottom-note tokens to that
+// numbering so the notation/playback use the same numbers the player sees on
+// their pan - the notes themselves are unchanged. Top voices 1-9, D and S are
+// identical in both numberings and pass through untouched.
+const BOTTOM_RENUMBER = { '10': '12', '11': '10', '12': '11' };
+
 // Second pass: assign phase-corrected step / hand / voice.
 for (const { note, m, raw } of placed) {
   const corrected = raw - PHASE;
@@ -189,10 +197,11 @@ for (const { note, m, raw } of placed) {
   const hand = note.cy > (m.rowY + CENTER_OFFSET) ? 'L' : 'R';
 
   const token = note.text;
-  const voice = token === 'D' ? 'D'
+  let voice = token === 'D' ? 'D'
     : token === 'K' ? 'S'
     : /^([1-9]|1[0-2])$/.test(token) ? token
     : null;
+  if (voice) voice = BOTTOM_RENUMBER[voice] || voice;
 
   if (voice === null) {
     unknown.push({ page: note.page, text: token, xMin: note.xMin, yMin: note.yMin });
@@ -273,12 +282,13 @@ const instrument = {
     { note: 'A3', bottom: false }, { note: 'Bb3', bottom: false }, { note: 'C4', bottom: false },
     { note: 'D4', bottom: false }, { note: 'E4', bottom: false }, { note: 'F4', bottom: false },
     { note: 'G4', bottom: false }, { note: 'A4', bottom: false }, { note: 'C5', bottom: false },
-    // 9 tone fields on top (1-9); 3 on the underside (10-12), positioned below
-    // their top-field neighbours: 10 below 5, 11 below 4, 12 below 6.
-    // Ring angles for a 9-field top: 5->80deg, 4->280deg, 6->240deg.
-    { note: 'D5', bottom: true, ang: 80, rad: 136 },
+    // 9 tone fields on top (1-9); 3 on the underside (10-12) in the owner's
+    // Yatao D Kurd 13 numbering: 10 F3, 11 G3, 12 D5. Each keeps the rim spot it
+    // occupies on the pan drawing (F3 left, G3 upper-left, D5 right), so the
+    // numbers land as 10=left, 11=upper-left, 12=right.
     { note: 'F3', bottom: true, ang: 280, rad: 136 },
     { note: 'G3', bottom: true, ang: 240, rad: 136 },
+    { note: 'D5', bottom: true, ang: 80, rad: 136 },
   ],
 };
 

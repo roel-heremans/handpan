@@ -11,6 +11,15 @@ browser and go.
 
 ---
 
+## Backlog
+
+- **Performance section**:
+  - Hiding the handpan display option and freeing space for showing more tacks
+  - Having sliding option to go back and forth on the displayed notes additionally to  
+    the jump back and forward option
+  - Saving the entered songs in a database that you can reload and this between systems
+---
+
 ## Features
 
 - **Interactive pan diagram** — an accurate zigzag layout (note 1 at the bottom,

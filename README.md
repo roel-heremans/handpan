@@ -26,7 +26,7 @@ browser and go.
     the jump back and forward option — **[DONE]**
   - Saving the entered songs in a database that you can reload and this between systems
   - Adding the Allan Walker song as the default song to be loaded when first opening the app — **[DONE]**
-  - A slowest **0.25×** performance speed — **[DONE]**
+  - Continuous performance-speed **slider** (0.25×–1×) replacing the fixed presets — **[DONE]**
   - The 2 meassures in the performance view should be slightly more compressed in a way that 
     it allows to have exactly 2 meassures fitting in the display. 
   - performance at speed 0.25x
